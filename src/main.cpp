@@ -9,10 +9,10 @@ int main() {
 	Memory<float> B(device, N);
 	Memory<float> C(device, N);
 
-	for(uint i=0u; i<N; i++) {
-		A[i] = 3.0f; // initialize memory
-		B[i] = 2.0f;
-		C[i] = 1.0f;
+	for(uint n=0u; n<N; n++) {
+		A[n] = 3.0f; // initialize memory
+		B[n] = 2.0f;
+		C[n] = 1.0f;
 	}
 
 	const Kernel add_kernel(device, N, "add_kernel", A, B, C); // kernel that runs on the device

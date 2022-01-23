@@ -181,7 +181,7 @@ public:
 
 template<typename T> class Memory {
 private:
-	uint N = 0u; // buffer length
+	ulong N = 0ull; // buffer length
 	uint d = 1u; // buffer dimensions
 	bool host_buffer_exists = false;
 	bool device_buffer_exists = false;
@@ -189,29 +189,29 @@ private:
 	cl::Buffer device_buffer; // device buffer
 	cl::CommandQueue cl_queue;
 public:
-	Memory(const Device& device, const uint N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true) {
+	Memory(const Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true) {
 		cl_queue = device.get_cl_queue();
 		this->N = N;
 		this->d = dimensions;
 		if(allocate_host) {
-			host_buffer = new T[N*dimensions];
-			for(uint i=0u; i<N*dimensions; i++) host_buffer[i] = (T)0;
+			host_buffer = new T[N*(ulong)dimensions];
+			for(ulong i=0ull; i<N*(ulong)dimensions; i++) host_buffer[i] = (T)0;
 			host_buffer_exists = true;
 		}
 		if(allocate_device) {
-			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*dimensions*sizeof(T));
+			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*(ulong)dimensions*sizeof(T));
 			device_buffer_exists = true;
 		}
 		write_to_device();
 	}
-	Memory(const Device& device, const uint N, const uint dimensions, T* const host_buffer, const bool allocate_device=true) {
+	Memory(const Device& device, const ulong N, const uint dimensions, T* const host_buffer, const bool allocate_device=true) {
 		cl_queue = device.get_cl_queue();
 		this->N = N;
 		this->d = dimensions;
 		this->host_buffer = host_buffer;
 		host_buffer_exists = true;
 		if(allocate_device) {
-			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*dimensions*sizeof(T));
+			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*(ulong)dimensions*sizeof(T));
 			device_buffer_exists = true;
 		}
 		write_to_device();
@@ -220,26 +220,26 @@ public:
 		delete[] host_buffer;
 		device_buffer = nullptr;
 	}
-	inline const uint length() const {
+	inline const ulong length() const {
 		return N;
 	}
 	inline const uint dimensions() const {
 		return d;
 	}
-	inline const uint range() const {
-		return N*d;
+	inline const ulong range() const {
+		return N*(ulong)d;
 	}
-	inline T& operator[](const uint i) {
+	inline T& operator[](const ulong i) {
 		return host_buffer[i];
 	}
-	inline const T& operator[](const uint i) const {
+	inline const T& operator[](const ulong i) const {
 		return host_buffer[i];
 	}
-	inline const T operator()(const uint i) const {
+	inline const T operator()(const ulong i) const {
 		return host_buffer[i];
 	}
-	inline const T operator()(const uint dimension, const uint i) const {
-		return host_buffer[i+dimension*N];
+	inline const T operator()(const ulong i, const uint dimension) const {
+		return host_buffer[i+(ulong)dimension*N];
 	}
 	inline T* data() {
 		return host_buffer;
@@ -251,20 +251,20 @@ public:
 		return device_buffer;
 	}
 	inline void reset(const T value=(T)0) {
-		if(host_buffer_exists) for(uint i=0u; i<N*d; i++) host_buffer[i] = value;
+		if(host_buffer_exists) for(ulong i=0ull; i<N*(ulong)d; i++) host_buffer[i] = value;
 		write_to_device();
 	}
 	inline void read_from_device(const bool blocking=true) {
-		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, 0u, N*d*sizeof(T), (void*)host_buffer);
+		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, 0u, N*(ulong)d*sizeof(T), (void*)host_buffer);
 	}
 	inline void write_to_device(const bool blocking=true) {
-		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueWriteBuffer(device_buffer, blocking, 0u, N*d*sizeof(T), (void*)host_buffer);
+		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueWriteBuffer(device_buffer, blocking, 0u, N*(ulong)d*sizeof(T), (void*)host_buffer);
 	}
-	inline void read_from_device(const uint offset, const uint length, const bool blocking=true) {
-		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, min(offset, N*d)*sizeof(T), min(length, N*d)*sizeof(T), (void*)host_buffer);
+	inline void read_from_device(const ulong offset, const ulong length, const bool blocking=true) {
+		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, min(offset, N*(ulong)d)*sizeof(T), min(length, N*(ulong)d-offset)*sizeof(T), (void*)host_buffer);
 	}
-	inline void write_to_device(const uint offset, const uint length, const bool blocking=true) {
-		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueWriteBuffer(device_buffer, blocking, min(offset, N*d)*sizeof(T), min(length, N*d)*sizeof(T), (void*)host_buffer);
+	inline void write_to_device(const ulong offset, const ulong length, const bool blocking=true) {
+		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueWriteBuffer(device_buffer, blocking, min(offset, N*(ulong)d)*sizeof(T), min(length, N*(ulong)d-offset)*sizeof(T), (void*)host_buffer);
 	}
 	inline void finish() {
 		cl_queue.finish();
@@ -273,27 +273,35 @@ public:
 
 class Kernel {
 private:
+	uint number_of_parameters = 0u;
 	cl::Kernel cl_kernel;
 	cl::NDRange cl_range_global, cl_range_local;
 	cl::CommandQueue cl_queue;
-	inline void initialize_ranges(const uint N) {
+	inline void initialize_ranges(const ulong N) {
 		cl_range_local = cl::NDRange(THREAD_BLOCK_SIZE); // warp size is 32
 		cl_range_global = cl::NDRange(((N+THREAD_BLOCK_SIZE-1)/THREAD_BLOCK_SIZE)*THREAD_BLOCK_SIZE); // make global range a multiple of local range
 	}
 public:
-	template<typename... T> Kernel(const Device& device, const uint N, const string& name, const Memory<T>&... parameters) {
+	template<typename... T> Kernel(const Device& device, const ulong N, const string& name, const Memory<T>&... parameters) {
 		cl_kernel = cl::Kernel(device.get_cl_program(), name.c_str());
-		uint number_of_parameters = 0u;
 		(cl_kernel.setArg(number_of_parameters++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 		initialize_ranges(N);
 		cl_queue = device.get_cl_queue();
 	}
-	template<typename... T> Kernel(const Device& device, const uint N, const string& name, const Memory<T>*... parameters) {
+	template<typename... T> Kernel(const Device& device, const ulong N, const string& name, const Memory<T>*... parameters) {
 		cl_kernel = cl::Kernel(device.get_cl_program(), name.c_str());
-		uint number_of_parameters = 0u;
 		(cl_kernel.setArg(number_of_parameters++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 		initialize_ranges(N);
 		cl_queue = device.get_cl_queue();
+	}
+	template<typename T> void add_parameter(const Memory<T>& parameter) {
+		cl_kernel.setArg(number_of_parameters++, parameter.get_cl_buffer());
+	}
+	template<typename T> void add_parameter(const Memory<T>* parameter) {
+		cl_kernel.setArg(number_of_parameters++, parameter->get_cl_buffer());
+	}
+	template<typename T> void add_parameter(const T parameter) {
+		cl_kernel.setArg(number_of_parameters++, parameter);
 	}
 	inline void run() const {
 		cl_queue.enqueueNDRangeKernel(cl_kernel, cl::NullRange, cl_range_global, cl_range_local);
