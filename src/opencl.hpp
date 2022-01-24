@@ -27,28 +27,28 @@ struct Device_Info {
 	uint cores=0u; // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
 	float tflops=0.0f; // estimated device floating point performance in TeraFLOPs/s
 	inline Device_Info() = default;
-	inline Device_Info(const cl::Device& d) {
-		cl_device = d; // see https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceInfo.html
-		name = trim(d.getInfo<CL_DEVICE_NAME>()); // device name
-		vendor = trim(d.getInfo<CL_DEVICE_VENDOR>()); // device vendor
-		driver_version = trim(d.getInfo<CL_DRIVER_VERSION>()); // device driver version
-		opencl_c_version = trim(d.getInfo<CL_DEVICE_OPENCL_C_VERSION>()); // device OpenCL C version
-		memory = (uint)(d.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>()/1048576ull); // global memory in MB
-		global_cache = (uint)(d.getInfo<CL_DEVICE_GLOBAL_MEM_CACHE_SIZE>()/1024ull); // global cache in KB
-		local_cache = (uint)(d.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>()/1024ull); // local cache in KB
-		max_global_buffer = (uint)(d.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>()/1048576ull); // maximum global buffer size in MB
-		max_constant_buffer = (uint)(d.getInfo<CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE>()/1024ull); // maximum constant buffer size in KB
-		compute_units = (uint)d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(); // compute units (CUs) can contain multiple cores depending on the microarchitecture
-		clock_frequency = (uint)d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>(); // in MHz
-		is_fp64_capable = (uint)d.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE>();
-		is_fp32_capable = (uint)d.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT>();
-		is_fp16_capable = (uint)d.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF>();
-		is_int64_capable = (uint)d.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG>();
-		is_int32_capable = (uint)d.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_INT>();
-		is_int16_capable = (uint)d.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT>();
-		is_int8_capable = (uint)d.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR>();
-		is_cpu = d.getInfo<CL_DEVICE_TYPE>()==CL_DEVICE_TYPE_CPU;
-		is_gpu = d.getInfo<CL_DEVICE_TYPE>()==CL_DEVICE_TYPE_GPU;
+	inline Device_Info(const cl::Device& cl_device) {
+		this->cl_device = cl_device; // see https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceInfo.html
+		name = trim(cl_device.getInfo<CL_DEVICE_NAME>()); // device name
+		vendor = trim(cl_device.getInfo<CL_DEVICE_VENDOR>()); // device vendor
+		driver_version = trim(cl_device.getInfo<CL_DRIVER_VERSION>()); // device driver version
+		opencl_c_version = trim(cl_device.getInfo<CL_DEVICE_OPENCL_C_VERSION>()); // device OpenCL C version
+		memory = (uint)(cl_device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>()/1048576ull); // global memory in MB
+		global_cache = (uint)(cl_device.getInfo<CL_DEVICE_GLOBAL_MEM_CACHE_SIZE>()/1024ull); // global cache in KB
+		local_cache = (uint)(cl_device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>()/1024ull); // local cache in KB
+		max_global_buffer = (uint)(cl_device.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>()/1048576ull); // maximum global buffer size in MB
+		max_constant_buffer = (uint)(cl_device.getInfo<CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE>()/1024ull); // maximum constant buffer size in KB
+		compute_units = (uint)cl_device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(); // compute units (CUs) can contain multiple cores depending on the microarchitecture
+		clock_frequency = (uint)cl_device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>(); // in MHz
+		is_fp64_capable = (uint)cl_device.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE>();
+		is_fp32_capable = (uint)cl_device.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT>();
+		is_fp16_capable = (uint)cl_device.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF>();
+		is_int64_capable = (uint)cl_device.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG>();
+		is_int32_capable = (uint)cl_device.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_INT>();
+		is_int16_capable = (uint)cl_device.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT>();
+		is_int8_capable = (uint)cl_device.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR>();
+		is_cpu = cl_device.getInfo<CL_DEVICE_TYPE>()==CL_DEVICE_TYPE_CPU;
+		is_gpu = cl_device.getInfo<CL_DEVICE_TYPE>()==CL_DEVICE_TYPE_GPU;
 		const uint ipc = is_gpu?2u:32u; // IPC (instructions per cycle) is 2 for GPUs and 32 for most modern CPUs
 		const float nvidia = (float)(contains(to_lower(vendor), "nvidia"))*(clock_frequency<1000u?192.0f:compute_units<=30u?128.0f:64.0f); // Nvidia GPUs have 192 cores/CU (Kepler), 128 cores/CU (Maxwell, Pascal, Ampere) or 64 cores/CU (P100, Volta, Turing, A100)
 		const float amd = (float)(contains(to_lower(vendor), "amd")||contains(to_lower(vendor), "advanced"))*(is_gpu?64.0f:0.5f); // AMD GCN GPUs usually have 64 cores/CU, AMD CPUs have 1/2 core/CU
@@ -74,18 +74,16 @@ inline void print_device_info(const Device_Info& d, const int id=-1) { // print 
 }
 inline vector<Device_Info> get_devices() { // returns a vector of all available OpenCL devices
 	vector<Device_Info> devices; // get all devices of all platforms
-	vector<cl::Platform> platforms; // get all platforms (drivers)
-	vector<cl::Device> devices_available;
-	cl::Platform::get(&platforms);
-	for(uint i=0u; i<(uint)platforms.size(); i++) {
-		devices_available.clear();
-		platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &devices_available);
-		if((uint)devices_available.size()==0u) continue; // no device found in plattform i
-		for(uint j=0u; j<(uint)devices_available.size(); j++) {
-			devices.push_back(Device_Info(devices_available[j]));
+	vector<cl::Platform> cl_platforms; // get all platforms (drivers)
+	cl::Platform::get(&cl_platforms);
+	for(uint i=0u; i<(uint)cl_platforms.size(); i++) {
+		vector<cl::Device> cl_devices;
+		cl_platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &cl_devices);
+		for(uint j=0u; j<(uint)cl_devices.size(); j++) {
+			devices.push_back(Device_Info(cl_devices[j]));
 		}
 	}
-	if((uint)platforms.size()==0u||(uint)devices.size()==0u) {
+	if((uint)cl_platforms.size()==0u||(uint)devices.size()==0u) {
 		print_error("There are no OpenCL devices available. Make sure that the OpenCL 1.2 Runtime for your device is installed. For GPUs it comes by default with the graphics driver, for CPUs it has to be installed separately.");
 	}
 	println("\r|----------------.--------------------------------------------------|");
