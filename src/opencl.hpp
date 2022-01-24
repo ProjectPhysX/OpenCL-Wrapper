@@ -297,14 +297,11 @@ public:
 		initialize_ranges(N);
 		cl_queue = device.get_cl_queue();
 	}
-	template<typename T> inline void add_parameter(const Memory<T>& parameter) {
-		cl_kernel.setArg(number_of_parameters++, parameter.get_cl_buffer());
+	template<typename... T> inline void add_parameters(const Memory<T>&... parameters) {
+		(cl_kernel.setArg(number_of_parameters++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 	}
-	template<typename T> inline void add_parameter(const Memory<T>* parameter) {
-		cl_kernel.setArg(number_of_parameters++, parameter->get_cl_buffer());
-	}
-	template<typename T> inline void add_parameter(const T parameter) {
-		cl_kernel.setArg(number_of_parameters++, parameter);
+	template<typename... T> inline void add_parameters(const Memory<T>*... parameters) {
+		(cl_kernel.setArg(number_of_parameters++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 	}
 	inline void run() const {
 		cl_queue.enqueueNDRangeKernel(cl_kernel, cl::NullRange, cl_range_global, cl_range_local);
