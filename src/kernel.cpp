@@ -1,4 +1,4 @@
-#include "kernel.hpp" // note: string literals can't be arbitrarily long, so periodically interrupt them with )+R( before every #ifdef, #else, #endif, #if, #elif
+#include "kernel.hpp" // note: string literals can't be arbitrarily long, so periodically interrupt with )+R(
 string opencl_c_container() { return R( // ########################## begin of OpenCL C code ####################################################################
 
 

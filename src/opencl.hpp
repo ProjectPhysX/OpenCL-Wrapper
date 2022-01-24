@@ -301,6 +301,9 @@ public:
 	template<typename... T> inline void add_parameters(const Memory<T>*... parameters) {
 		(cl_kernel.setArg(number_of_parameters++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 	}
+	template<typename... T> inline void add_constants(const T... constants) {
+		(cl_kernel.setArg(number_of_parameters++, constants), ...); // expand variadic template to pass constants as kernel parameters
+	}
 	inline void run() const {
 		cl_queue.enqueueNDRangeKernel(cl_kernel, cl::NullRange, cl_range_global, cl_range_local);
 		cl_queue.finish();
