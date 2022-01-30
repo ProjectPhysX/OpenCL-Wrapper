@@ -44,7 +44,7 @@ string get_opencl_c_code() {
 #define __local
 #define __private // private keyword already exists in C++
 
-// integer atomics
+// 32-bit integer atomics
 #define atomic_add(p,x) // (*p)+=x
 #define atomic_sub(p,x) // (*p)-=x
 #define atomic_xchg(p,x) // t=(*p);(*p)=x;x=t;
@@ -56,6 +56,19 @@ string get_opencl_c_code() {
 #define atomic_and(p,x) // (*p)=(*p)&x
 #define atomic_or(p,x) // (*p)=(*p)|x
 #define atomic_xor(p,x) // (*p)=(*p)^x
+
+// 64-bit integer atomics (cl_khr_int64_base_atomics extension must be supported by the device)
+#define atom_add(p,x) // (*p)+=x
+#define atom_sub(p,x) // (*p)-=x
+#define atom_xchg(p,x) // t=(*p);(*p)=x;x=t;
+#define atom_inc(p) // (*p)+=1
+#define atom_dec(p) // (*p)-=1
+#define atom_cmpxchg(p,c,x) // (*p)=((*p)==c?x:(*p))
+#define atom_max(p,x) // (*p)=max(*p,x)
+#define atom_min(p,x) // (*p)=min(*p,x)
+#define atom_and(p,x) // (*p)=(*p)&x
+#define atom_or(p,x) // (*p)=(*p)|x
+#define atom_xor(p,x) // (*p)=(*p)^x
 
 // integer functions
 #define abs(x) // |x|
