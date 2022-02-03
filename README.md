@@ -18,8 +18,8 @@ Works in both Windows and Linux with C++17.
    - easy handling of multi-dimensional vectors
    - can also be used to only allocate memory on host or only allocate memory on device
 3. create a `Kernel` with 1 line
-   - memory objects are linked to OpenCL C kernel parameters during kernel creation
-   - easy kernel execution
+   - Memory objects are linked to OpenCL C kernel parameters during Kernel creation
+   - easy Kernel execution
 4. OpenCL C code is embedded into C++
    - syntax highlighting in the code editor is retained
 

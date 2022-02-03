@@ -162,9 +162,8 @@ public:
 		write_file("bin/kernel.log", log); // save build log
 		if((uint)log.length()>2u) print_warning(log); // print build log
 #endif // LOG
-		if(error) { // return false if there is an error with OpenCL code compilation
-			print_error("OpenCL code compilation failed. Make sure there are no errors in kernel.cpp (\"#define LOG\" might help). If your GPU is old, try uncommenting \"#define USE_OPENCL_1_1\".");
-		} else print_info("OpenCL code successfully compiled.");
+		if(error) print_error("OpenCL C code compilation failed. Make sure there are no errors in kernel.cpp (\"#define LOG\" might help). If your GPU is old, try uncommenting \"#define USE_OPENCL_1_1\".");
+		else print_info("OpenCL C code successfully compiled.");
 #ifdef PTX // generate assembly (ptx) file for OpenCL code
 		write_file("bin/kernel.ptx", cl_program.getInfo<CL_PROGRAM_BINARIES>()[0]); // save binary (ptx file)
 #endif // PTX
@@ -189,30 +188,58 @@ private:
 	T* host_buffer = nullptr; // host buffer
 	cl::Buffer device_buffer; // device buffer
 	cl::CommandQueue cl_queue;
+	void initialize_auxiliary_pointers() {
+		x = s0 = host_buffer;
+		if(d>0x1u) y = s1 = host_buffer+N;
+		if(d>0x2u) z = s2 = host_buffer+N*0x2ull;
+		if(d>0x3u) w = s3 = host_buffer+N*0x3ull;
+		if(d>0x4u) s4 = host_buffer+N*0x4ull;
+		if(d>0x5u) s5 = host_buffer+N*0x5ull;
+		if(d>0x6u) s6 = host_buffer+N*0x6ull;
+		if(d>0x7u) s7 = host_buffer+N*0x7ull;
+		if(d>0x8u) s8 = host_buffer+N*0x8ull;
+		if(d>0x9u) s9 = host_buffer+N*0x9ull;
+		if(d>0xAu) sA = host_buffer+N*0xAull;
+		if(d>0xBu) sB = host_buffer+N*0xBull;
+		if(d>0xCu) sC = host_buffer+N*0xCull;
+		if(d>0xDu) sD = host_buffer+N*0xDull;
+		if(d>0xEu) sE = host_buffer+N*0xEull;
+		if(d>0xFu) sF = host_buffer+N*0xFull;
+	}
 public:
+	T *x=nullptr, *y=nullptr, *z=nullptr, *w=nullptr; // host buffer auxiliary pointers for multi-dimensional array access (array of structurs)
+	T *s0=nullptr, *s1=nullptr, *s2=nullptr, *s3=nullptr, *s4=nullptr, *s5=nullptr, *s6=nullptr, *s7=nullptr, *s8=nullptr, *s9=nullptr, *sA=nullptr, *sB=nullptr, *sC=nullptr, *sD=nullptr, *sE=nullptr, *sF=nullptr;
 	inline Memory(const Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true) {
+		if(N*(ulong)dimensions==0ull) print_error("Memory size must be larger than 0.");
 		cl_queue = device.get_cl_queue();
 		this->N = N;
 		this->d = dimensions;
 		if(allocate_host) {
 			host_buffer = new T[N*(ulong)dimensions];
 			for(ulong i=0ull; i<N*(ulong)dimensions; i++) host_buffer[i] = (T)0;
+			initialize_auxiliary_pointers();
 			host_buffer_exists = true;
 		}
 		if(allocate_device) {
-			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*(ulong)dimensions*sizeof(T));
+			int error = 0;
+			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*(ulong)dimensions*sizeof(T), nullptr, &error);
+			if(error) print_error("OpenCL Buffer allocation failed with error code "+to_string(error)+".");
 			device_buffer_exists = true;
 		}
 		write_to_device();
 	}
 	inline Memory(const Device& device, const ulong N, const uint dimensions, T* const host_buffer, const bool allocate_device=true) {
+		if(N*(ulong)dimensions==0ull) print_error("Memory size must be larger than 0.");
 		cl_queue = device.get_cl_queue();
 		this->N = N;
 		this->d = dimensions;
 		this->host_buffer = host_buffer;
+		initialize_auxiliary_pointers();
 		host_buffer_exists = true;
 		if(allocate_device) {
-			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*(ulong)dimensions*sizeof(T));
+			int error = 0;
+			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*(ulong)dimensions*sizeof(T), nullptr, &error);
+			if(error) print_error("OpenCL Buffer allocation failed with error code "+to_string(error)+".");
 			device_buffer_exists = true;
 		}
 		write_to_device();
@@ -220,6 +247,10 @@ public:
 	inline ~Memory() {
 		delete[] host_buffer;
 		device_buffer = nullptr;
+	}
+	inline void reset(const T value=(T)0) {
+		if(host_buffer_exists) for(ulong i=0ull; i<N*(ulong)d; i++) host_buffer[i] = value;
+		write_to_device();
 	}
 	inline const ulong length() const {
 		return N;
@@ -229,6 +260,21 @@ public:
 	}
 	inline const ulong range() const {
 		return N*(ulong)d;
+	}
+	inline const ulong capacity() const { // returns capacity of the buffer in Byte
+		return N*(ulong)d*sizeof(T);
+	}
+	inline T* const data() {
+		return host_buffer;
+	}
+	inline const T* const data() const {
+		return host_buffer;
+	}
+	inline T* const operator()() {
+		return host_buffer;
+	}
+	inline const T* const operator()() const {
+		return host_buffer;
 	}
 	inline T& operator[](const ulong i) {
 		return host_buffer[i];
@@ -240,20 +286,7 @@ public:
 		return host_buffer[i];
 	}
 	inline const T operator()(const ulong i, const uint dimension) const {
-		return host_buffer[i+(ulong)dimension*N];
-	}
-	inline T* data() {
-		return host_buffer;
-	}
-	inline const T* data() const {
-		return host_buffer;
-	}
-	inline const cl::Buffer& get_cl_buffer() const {
-		return device_buffer;
-	}
-	inline void reset(const T value=(T)0) {
-		if(host_buffer_exists) for(ulong i=0ull; i<N*(ulong)d; i++) host_buffer[i] = value;
-		write_to_device();
+		return host_buffer[i+(ulong)dimension*N]; // array of structurs
 	}
 	inline void read_from_device(const bool blocking=true) {
 		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, 0u, N*(ulong)d*sizeof(T), (void*)host_buffer);
@@ -269,6 +302,9 @@ public:
 	}
 	inline void finish() {
 		cl_queue.finish();
+	}
+	inline const cl::Buffer& get_cl_buffer() const {
+		return device_buffer;
 	}
 };
 
