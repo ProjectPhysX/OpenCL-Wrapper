@@ -135,7 +135,7 @@ int main() {
 		print_info(name); // print device name
 	}
 
-	// 2. embed OpenCL C code (raw string iteral breaks syntax highlighting)
+	// 2. embed OpenCL C code (raw string literal breaks syntax highlighting)
 
 	string opencl_c_code = R"(
 		kernel void add_kernel(global float* A, global float* B, global float* C) { // equivalent to "for(int n=0; n<N; n++) {", but executed in parallel
