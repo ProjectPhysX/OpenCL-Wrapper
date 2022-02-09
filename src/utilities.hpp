@@ -521,47 +521,16 @@ inline string alignl(const uint n, const string& x="") { // converts x to string
 	for(uint i=0u; i<n; i++) s += " ";
 	return s.substr(0, max(n, (uint)x.length()));
 }
-inline string alignl(const uint n, const int x) { // converts x to string with spaces behind such that length is n if x does not have more digits than n
-	return alignl(n, to_string(x));
-}
-inline string alignl(const uint n, const uint x) { // converts x to string with spaces behind such that length is n if x does not have more digits than n
-	return alignl(n, to_string(x));
-}
-inline string alignl(const uint n, const slong x) { // converts x to string with spaces behind such that length is n if x does not have more digits than n
-	return alignl(n, to_string(x));
-}
-inline string alignl(const uint n, const ulong x) { // converts x to string with spaces behind such that length is n if x does not have more digits than n
-	return alignl(n, to_string(x));
-}
-inline string alignl(const uint n, const float x) { // converts x to string with spaces behind such that length is n if x is not longer than n
-	return alignl(n, to_string(x));
-}
-inline string alignl(const uint n, const double x) { // converts x to string with spaces behind such that length is n if x is not longer than n
-	return alignl(n, to_string(x));
-}
-
 inline string alignr(const uint n, const string& x="") { // converts x to string with spaces in front such that length is n if x is not longer than n
 	string s = "";
 	for(uint i=0u; i<n; i++) s += " ";
 	s += x;
 	return s.substr((uint)min((int)s.length()-(int)n, (int)n), s.length());
 }
-inline string alignr(const uint n, const int x) { // converts x to string with spaces in front such that length is n if x does not have more digits than n
-	return alignr(n, to_string(x));
+template<typename T> inline string alignl(const uint n, const T x) { // converts x to string with spaces behind such that length is n if x does not have more digits than n
+	return alignl(n, to_string(x));
 }
-inline string alignr(const uint n, const uint x) { // converts x to string with spaces in front such that length is n if x does not have more digits than n
-	return alignr(n, to_string(x));
-}
-inline string alignr(const uint n, const slong x) { // converts x to string with spaces in front such that length is n if x does not have more digits than n
-	return alignr(n, to_string(x));
-}
-inline string alignr(const uint n, const ulong x) { // converts x to string with spaces in front such that length is n if x does not have more digits than n
-	return alignr(n, to_string(x));
-}
-inline string alignr(const uint n, const float x) { // converts x to string with spaces in front such that length is n if x is not longer than n
-	return alignr(n, to_string(x));
-}
-inline string alignr(const uint n, const double x) { // converts x to string with spaces in front such that length is n if x is not longer than n
+template<typename T> inline string alignr(const uint n, const T x) { // converts x to string with spaces in front such that length is n if x does not have more digits than n
 	return alignr(n, to_string(x));
 }
 
@@ -577,23 +546,7 @@ inline void reprint(const string& s="") {
 inline void wait() {
 	cin.get();
 }
-
-inline void println(const int x) {
-	println(to_string(x));
-}
-inline void println(const uint x) {
-	println(to_string(x));
-}
-inline void println(const slong x) {
-	println(to_string(x));
-}
-inline void println(const ulong x) {
-	println(to_string(x));
-}
-inline void println(const float x) {
-	println(to_string(x));
-}
-inline void println(const double x) {
+template<typename T> inline void println(const T x) {
 	println(to_string(x));
 }
 
