@@ -17,6 +17,7 @@ Works in both Windows and Linux with C++17.
    - easy host <-> device memory transfer
    - easy handling of multi-dimensional vectors
    - can also be used to only allocate memory on host or only allocate memory on device
+   - automatically tracks total global memory usage of device when allocating/deleting memory
 3. create a `Kernel` with 1 line
    - Memory objects are linked to OpenCL C kernel parameters during Kernel creation
    - easy Kernel execution
@@ -25,8 +26,10 @@ Works in both Windows and Linux with C++17.
 
 ## No need to:
 - have code overhead for selecting a platform/device, passing the OpenCL C code, etc.
-- keep track of global/local ranges for buffers and kernels
+- keep track of length and data type for buffers
 - have duplicate code for host and device buffers
+- keep track of total global memory usage
+- keep track of global/local range for kernels
 - bother with Queue, Context, Source, Program
 - load a `.cl` file at runtime
 
@@ -36,7 +39,7 @@ Works in both Windows and Linux with C++17.
 #include "opencl.hpp"
 
 int main() {
-	const Device device(select_device_with_most_flops()); // compile OpenCL C code for the fastest available device
+	Device device(select_device_with_most_flops()); // compile OpenCL C code for the fastest available device
 
 	const uint N = 1024u; // size of vectors
 
@@ -50,7 +53,7 @@ int main() {
 		C[n] = 1.0f;
 	}
 
-	const Kernel add_kernel(device, N, "add_kernel", A, B, C); // kernel that runs on the device
+	Kernel add_kernel(device, N, "add_kernel", A, B, C); // kernel that runs on the device
 
 	print_info("Value before kernel execution: C[0] = "+to_string(C[0]));
 

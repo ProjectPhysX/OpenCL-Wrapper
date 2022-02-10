@@ -18,6 +18,7 @@ struct Device_Info {
 	string name, vendor; // device name, vendor
 	string driver_version, opencl_c_version; // device driver version, OpenCL C version
 	uint memory=0u; // global memory in MB
+	uint memory_used=0u; // track global memory usage in MB
 	uint global_cache=0u, local_cache=0u; // global cache in KB, local cache in KB
 	uint max_global_buffer=0u, max_constant_buffer=0u; // maximum global buffer size in MB, maximum constant buffer size in KB
 	uint compute_units=0u; // compute units (CUs) can contain multiple cores depending on the microarchitecture
@@ -188,6 +189,7 @@ private:
 	T* host_buffer = nullptr; // host buffer
 	cl::Buffer device_buffer; // device buffer
 	cl::CommandQueue cl_queue;
+	Device_Info* info; // pointer to Device_Info of linked Device (for tracking memory usage)
 	void initialize_auxiliary_pointers() {
 		x = s0 = host_buffer;
 		if(d>0x1u) y = s1 = host_buffer+N;
@@ -206,47 +208,47 @@ private:
 		if(d>0xEu) sE = host_buffer+N*0xEull;
 		if(d>0xFu) sF = host_buffer+N*0xFull;
 	}
+	void allocate_device_buffer(Device& device, const bool allocate_device) {
+		if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
+		info = &(device.info);
+		cl_queue = device.get_cl_queue();
+		if(allocate_device) {
+			info->memory_used += (uint)(capacity()/1048576ull); // track device memory usage
+			if(info->memory_used>info->memory) print_error("Device \""+info->name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(info->memory_used)+" MB / "+to_string(info->memory)+" MB.");
+			int error = 0;
+			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, capacity(), nullptr, &error);
+			if(error) print_error("OpenCL Buffer allocation failed with error code "+to_string(error)+".");
+			device_buffer_exists = true;
+		}
+	}
 public:
 	T *x=nullptr, *y=nullptr, *z=nullptr, *w=nullptr; // host buffer auxiliary pointers for multi-dimensional array access (array of structurs)
 	T *s0=nullptr, *s1=nullptr, *s2=nullptr, *s3=nullptr, *s4=nullptr, *s5=nullptr, *s6=nullptr, *s7=nullptr, *s8=nullptr, *s9=nullptr, *sA=nullptr, *sB=nullptr, *sC=nullptr, *sD=nullptr, *sE=nullptr, *sF=nullptr;
-	inline Memory(const Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true) {
-		if(N*(ulong)dimensions==0ull) print_error("Memory size must be larger than 0.");
-		cl_queue = device.get_cl_queue();
+	inline Memory(Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true) {
 		this->N = N;
 		this->d = dimensions;
+		allocate_device_buffer(device, allocate_device);
 		if(allocate_host) {
 			host_buffer = new T[N*(ulong)dimensions];
 			for(ulong i=0ull; i<N*(ulong)dimensions; i++) host_buffer[i] = (T)0;
 			initialize_auxiliary_pointers();
 			host_buffer_exists = true;
 		}
-		if(allocate_device) {
-			int error = 0;
-			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*(ulong)dimensions*sizeof(T), nullptr, &error);
-			if(error) print_error("OpenCL Buffer allocation failed with error code "+to_string(error)+".");
-			device_buffer_exists = true;
-		}
 		write_to_device();
 	}
-	inline Memory(const Device& device, const ulong N, const uint dimensions, T* const host_buffer, const bool allocate_device=true) {
-		if(N*(ulong)dimensions==0ull) print_error("Memory size must be larger than 0.");
-		cl_queue = device.get_cl_queue();
+	inline Memory(Device& device, const ulong N, const uint dimensions, T* const host_buffer, const bool allocate_device=true) {
 		this->N = N;
 		this->d = dimensions;
+		allocate_device_buffer(device, allocate_device);
 		this->host_buffer = host_buffer;
 		initialize_auxiliary_pointers();
 		host_buffer_exists = true;
-		if(allocate_device) {
-			int error = 0;
-			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, N*(ulong)dimensions*sizeof(T), nullptr, &error);
-			if(error) print_error("OpenCL Buffer allocation failed with error code "+to_string(error)+".");
-			device_buffer_exists = true;
-		}
 		write_to_device();
 	}
 	inline ~Memory() {
 		delete[] host_buffer;
 		device_buffer = nullptr;
+		if(device_buffer_exists) info->memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
 	}
 	inline void reset(const T value=(T)0) {
 		if(host_buffer_exists) for(ulong i=0ull; i<N*(ulong)d; i++) host_buffer[i] = value;
@@ -289,10 +291,10 @@ public:
 		return host_buffer[i+(ulong)dimension*N]; // array of structurs
 	}
 	inline void read_from_device(const bool blocking=true) {
-		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, 0u, N*(ulong)d*sizeof(T), (void*)host_buffer);
+		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, 0u, capacity(), (void*)host_buffer);
 	}
 	inline void write_to_device(const bool blocking=true) {
-		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueWriteBuffer(device_buffer, blocking, 0u, N*(ulong)d*sizeof(T), (void*)host_buffer);
+		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueWriteBuffer(device_buffer, blocking, 0u, capacity(), (void*)host_buffer);
 	}
 	inline void read_from_device(const ulong offset, const ulong length, const bool blocking=true) {
 		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, min(offset, N*(ulong)d)*sizeof(T), min(length, N*(ulong)d-offset)*sizeof(T), (void*)host_buffer);

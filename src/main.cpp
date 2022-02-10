@@ -1,7 +1,7 @@
 #include "opencl.hpp"
 
 int main() {
-	const Device device(select_device_with_most_flops()); // compile OpenCL C code for the fastest available device
+	Device device(select_device_with_most_flops()); // compile OpenCL C code for the fastest available device
 
 	const uint N = 1024u; // size of vectors
 
@@ -15,7 +15,7 @@ int main() {
 		C[n] = 1.0f;
 	}
 
-	const Kernel add_kernel(device, N, "add_kernel", A, B, C); // kernel that runs on the device
+	Kernel add_kernel(device, N, "add_kernel", A, B, C); // kernel that runs on the device
 
 	print_info("Value before kernel execution: C[0] = "+to_string(C[0]));
 
