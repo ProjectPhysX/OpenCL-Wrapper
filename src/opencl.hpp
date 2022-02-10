@@ -103,7 +103,7 @@ inline Device_Info select_device_with_most_flops(const vector<Device_Info>& devi
 			best_i = i;
 		}
 	}
-	print_device_info(devices[best_i], best_i); // print device info
+	print_device_info(devices[best_i], best_i);
 	return devices[best_i];
 }
 inline Device_Info select_device_with_most_memory(const vector<Device_Info>& devices=get_devices()) { // returns device with largest memory capacity
@@ -115,7 +115,7 @@ inline Device_Info select_device_with_most_memory(const vector<Device_Info>& dev
 			best_i = i;
 		}
 	}
-	print_device_info(devices[best_i], best_i); // print device info
+	print_device_info(devices[best_i], best_i);
 	return devices[best_i];
 }
 inline Device_Info select_device_with_id(const uint id, const vector<Device_Info>& devices=get_devices()) { // returns device with specified ID
@@ -222,7 +222,7 @@ private:
 		}
 	}
 public:
-	T *x=nullptr, *y=nullptr, *z=nullptr, *w=nullptr; // host buffer auxiliary pointers for multi-dimensional array access (array of structurs)
+	T *x=nullptr, *y=nullptr, *z=nullptr, *w=nullptr; // host buffer auxiliary pointers for multi-dimensional array access (array of structures)
 	T *s0=nullptr, *s1=nullptr, *s2=nullptr, *s3=nullptr, *s4=nullptr, *s5=nullptr, *s6=nullptr, *s7=nullptr, *s8=nullptr, *s9=nullptr, *sA=nullptr, *sB=nullptr, *sC=nullptr, *sD=nullptr, *sE=nullptr, *sF=nullptr;
 	inline Memory(Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true) {
 		this->N = N;
@@ -288,7 +288,7 @@ public:
 		return host_buffer[i];
 	}
 	inline const T operator()(const ulong i, const uint dimension) const {
-		return host_buffer[i+(ulong)dimension*N]; // array of structurs
+		return host_buffer[i+(ulong)dimension*N]; // array of structures
 	}
 	inline void read_from_device(const bool blocking=true) {
 		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, 0u, capacity(), (void*)host_buffer);

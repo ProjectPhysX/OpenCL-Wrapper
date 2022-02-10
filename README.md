@@ -58,7 +58,7 @@ int main() {
 	print_info("Value before kernel execution: C[0] = "+to_string(C[0]));
 
 	A.write_to_device(); // copy data from host memory to device memory
-	B.write_to_device(); // copy data from host memory to device memory
+	B.write_to_device();
 	add_kernel.run(); // run add_kernel on the device
 	C.read_from_device(); // copy data from device memory to host memory
 
@@ -76,7 +76,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 
 
 
-kernel void add_kernel(global float* A, global float* B, global float* C) { // equivalent to "for(int n=0; n<N; n++) {", but executed in parallel
+kernel void add_kernel(global float* A, global float* B, global float* C) { // equivalent to "for(uint n=0u; n<N; n++) {", but executed in parallel
 	const uint n = get_global_id(0);
 	C[n] = A[n]+B[n];
 }
@@ -128,9 +128,9 @@ int main() {
 			const float arm = (float)(contains(to_lower(vendor), "arm"))*(is_gpu?8.0f:1.0f); // ARM GPUs usually have 8 cores/CU, ARM CPUs have 1 core/CU
 			const uint cores = to_uint((float)compute_units*(nvidia+amd+intel+arm)); // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
 			const float tflops = 1E-6f*(float)cores*(float)ipc*(float)clock_frequency; // estimated device floating point performance in TeraFLOPs/s
-			if(tflops>best_value) { // device_memory>best_value
-				best_value = tflops; // best_value = device_memory;
-				best_i = i; // find index of fastest device
+			if(tflops>best_value) {
+				best_value = tflops;
+				best_i = i;
 			}
 		}
 		const string name = trim(cl_devices[best_i].getInfo<CL_DEVICE_NAME>()); // device name
@@ -141,7 +141,7 @@ int main() {
 	// 2. embed OpenCL C code (raw string literal breaks syntax highlighting)
 
 	string opencl_c_code = R"(
-		kernel void add_kernel(global float* A, global float* B, global float* C) { // equivalent to "for(int n=0; n<N; n++) {", but executed in parallel
+		kernel void add_kernel(global float* A, global float* B, global float* C) { // equivalent to "for(uint n=0u; n<N; n++) {", but executed in parallel
 			const uint n = get_global_id(0);
 			C[n] = A[n]+B[n];
 		}
