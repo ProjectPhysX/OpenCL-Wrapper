@@ -96,11 +96,11 @@ inline vector<Device_Info> get_devices() { // returns a vector of all available 
 }
 inline Device_Info select_device_with_most_flops(const vector<Device_Info>& devices=get_devices()) { // returns device with best floating-point performance
 	float best_value = 0.0f;
-	uint best_i = 0u; // index of fastest device
+	uint best_i = 0u;
 	for(uint i=0u; i<(uint)devices.size(); i++) { // find device with highest (estimated) floating point performance
-		if(devices[i].tflops>best_value) { // device_memory>best_value
-			best_value = devices[i].tflops; // best_value = device_memory;
-			best_i = i; // find index of fastest device
+		if(devices[i].tflops>best_value) {
+			best_value = devices[i].tflops;
+			best_i = i;
 		}
 	}
 	print_device_info(devices[best_i], best_i); // print device info
@@ -108,11 +108,11 @@ inline Device_Info select_device_with_most_flops(const vector<Device_Info>& devi
 }
 inline Device_Info select_device_with_most_memory(const vector<Device_Info>& devices=get_devices()) { // returns device with largest memory capacity
 	uint best_value = 0u;
-	uint best_i = 0u; // index of fastest device
+	uint best_i = 0u;
 	for(uint i=0u; i<(uint)devices.size(); i++) { // find device with most memory
 		if(devices[i].memory>best_value) {
 			best_value = devices[i].memory;
-			best_i = i; // find index of fastest device
+			best_i = i;
 		}
 	}
 	print_device_info(devices[best_i], best_i); // print device info
@@ -120,7 +120,7 @@ inline Device_Info select_device_with_most_memory(const vector<Device_Info>& dev
 }
 inline Device_Info select_device_with_id(const uint id, const vector<Device_Info>& devices=get_devices()) { // returns device with specified ID
 	if(id<(uint)devices.size()) {
-		print_device_info(devices[id], id); // print device info
+		print_device_info(devices[id], id);
 		return devices[id];
 	} else {
 		print_error("Your selected device ID ("+to_string(id)+") is wrong. Check the setting \"#define DEVICE x\" in defines.hpp.");
