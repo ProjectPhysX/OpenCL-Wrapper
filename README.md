@@ -116,7 +116,7 @@ int main() {
 		float best_value = 0.0f;
 		uint best_i = 0u; // index of fastest device
 		for(uint i=0u; i<(uint)cl_devices.size(); i++) { // find device with highest (estimated) floating point performance
-			name = trim(cl_devices[i].getInfo<CL_DEVICE_NAME>()); // device name
+			const string name = trim(cl_devices[i].getInfo<CL_DEVICE_NAME>()); // device name
 			const string vendor = trim(cl_devices[i].getInfo<CL_DEVICE_VENDOR>()); // device vendor
 			const uint compute_units = (uint)cl_devices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(); // compute units (CUs) can contain multiple cores depending on the microarchitecture
 			const uint clock_frequency = (uint)cl_devices[i].getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>(); // in MHz
