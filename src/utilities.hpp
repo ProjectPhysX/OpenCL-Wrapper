@@ -458,12 +458,9 @@ inline uint length(const string& s) {
 inline bool contains(const string& s, const string& match) {
 	return s.find(match)!=string::npos;
 }
-inline bool contains(const string& s, const vector<string>& v) {
-	bool r = false;
-	for(int i=0; i<(int)v.size(); i++) {
-		r = r||contains(s, v[i]);
-	}
-	return r;
+inline bool contains_any(const string& s, const vector<string>& matches) {
+	for(uint i=0u; i<(uint)matches.size(); i++) if(contains(s, matches[i])) return true;
+	return false;
 }
 inline string to_lower(const string& s) {
 	string r = "";
