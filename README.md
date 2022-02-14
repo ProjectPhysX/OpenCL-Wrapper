@@ -42,18 +42,17 @@ int main() {
 	Device device(select_device_with_most_flops()); // compile OpenCL C code for the fastest available device
 
 	const uint N = 1024u; // size of vectors
-
 	Memory<float> A(device, N); // allocate memory on both host and device
 	Memory<float> B(device, N);
 	Memory<float> C(device, N);
+
+	Kernel add_kernel(device, N, "add_kernel", A, B, C); // kernel that runs on the device
 
 	for(uint n=0u; n<N; n++) {
 		A[n] = 3.0f; // initialize memory
 		B[n] = 2.0f;
 		C[n] = 1.0f;
 	}
-
-	Kernel add_kernel(device, N, "add_kernel", A, B, C); // kernel that runs on the device
 
 	print_info("Value before kernel execution: C[0] = "+to_string(C[0]));
 
@@ -86,7 +85,7 @@ kernel void add_kernel(global float* A, global float* B, global float* C) { // e
 );} // ############################################################### end of OpenCL C code #####################################################################
 ```
 
-### For comparison, the very same OpenCL vector addition example, containing 35 lines of program logic, looks like this when directly using the OpenCL C++ bindings:
+### For comparison, the very same OpenCL vector addition example looks like this when directly using the OpenCL C++ bindings:
 ```c
 #define to_string to_string_old // use own to_string methods
 #include <CL/cl.hpp>
