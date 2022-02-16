@@ -192,7 +192,7 @@ private:
 	T* host_buffer = nullptr; // host buffer
 	cl::Buffer device_buffer; // device buffer
 	cl::CommandQueue cl_queue;
-	Device_Info* info; // pointer to Device_Info of linked Device (for tracking memory usage)
+	Device_Info* info = nullptr; // pointer to Device_Info of linked Device (for tracking memory usage)
 	void initialize_auxiliary_pointers() {
 		x = s0 = host_buffer;
 		if(d>0x1u) y = s1 = host_buffer+N;
@@ -227,7 +227,6 @@ private:
 public:
 	T *x=nullptr, *y=nullptr, *z=nullptr, *w=nullptr; // host buffer auxiliary pointers for multi-dimensional array access (array of structures)
 	T *s0=nullptr, *s1=nullptr, *s2=nullptr, *s3=nullptr, *s4=nullptr, *s5=nullptr, *s6=nullptr, *s7=nullptr, *s8=nullptr, *s9=nullptr, *sA=nullptr, *sB=nullptr, *sC=nullptr, *sD=nullptr, *sE=nullptr, *sF=nullptr;
-	inline Memory() = default;
 	inline Memory(Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true) {
 		this->N = N;
 		this->d = dimensions;
@@ -325,7 +324,6 @@ private:
 		cl_range_global = cl::NDRange(((N+THREAD_BLOCK_SIZE-1)/THREAD_BLOCK_SIZE)*THREAD_BLOCK_SIZE); // make global range a multiple of local range
 	}
 public:
-	inline Kernel() = default;
 	template<typename... T> inline Kernel(const Device& device, const ulong N, const string& name, const Memory<T>&... parameters) {
 		cl_kernel = cl::Kernel(device.get_cl_program(), name.c_str());
 		(cl_kernel.setArg(number_of_parameters++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
