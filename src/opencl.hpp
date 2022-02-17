@@ -192,8 +192,8 @@ private:
 	bool device_buffer_exists = false;
 	T* host_buffer = nullptr; // host buffer
 	cl::Buffer device_buffer; // device buffer
-	cl::CommandQueue cl_queue; // command queue
 	Device* device = nullptr; // pointer to linked Device
+	cl::CommandQueue cl_queue; // command queue
 	void initialize_auxiliary_pointers() {
 		x = s0 = host_buffer;
 		if(d>0x1u) y = s1 = host_buffer+N;
@@ -255,7 +255,7 @@ public:
 		delete_buffers();
 		if(had_device_buffer) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
 	}
-	inline Memory& operator=(Memory&& memory) { // move assignment
+	inline Memory& operator=(Memory&& memory) noexcept { // move assignment
 		N = memory.length();
 		d = memory.dimensions();
 		device = memory.device;
