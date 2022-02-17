@@ -259,7 +259,7 @@ public:
 		N = memory.length();
 		d = memory.dimensions();
 		device = memory.device;
-		cl_queue = device->get_cl_queue();
+		cl_queue = memory.device->get_cl_queue();
 		if(memory.device_buffer_exists) {
 			device_buffer = memory.get_cl_buffer();
 			memory.delete_device_buffer(); // set memory.device_buffer_exists = false; for correct memory tracking
