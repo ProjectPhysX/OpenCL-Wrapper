@@ -1,4 +1,4 @@
-#include "kernel.hpp" // note: string literals can't be arbitrarily long, so periodically interrupt with )+R(
+#include "kernel.hpp" // note: unbalanced round brackets () are not allowed and string literals can't be arbitrarily long, so periodically interrupt with )+R(
 string opencl_c_container() { return R( // ########################## begin of OpenCL C code ####################################################################
 
 

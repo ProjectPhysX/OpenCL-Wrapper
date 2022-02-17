@@ -27,7 +27,6 @@ struct Device_Info {
 	uint is_fp64_capable=0u, is_fp32_capable=0u, is_fp16_capable=0u, is_int64_capable=0u, is_int32_capable=0u, is_int16_capable=0u, is_int8_capable=0u;
 	uint cores=0u; // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
 	float tflops=0.0f; // estimated device floating point performance in TeraFLOPs/s
-	inline Device_Info() {}; // default constructor
 	inline Device_Info(const cl::Device& cl_device) {
 		this->cl_device = cl_device; // see https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceInfo.html
 		name = trim(cl_device.getInfo<CL_DEVICE_NAME>()); // device name
@@ -61,6 +60,7 @@ struct Device_Info {
 		cores = to_uint((float)compute_units*(nvidia+amd+intel+arm)); // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
 		tflops = 1E-6f*(float)cores*(float)ipc*(float)clock_frequency; // estimated device floating point performance in TeraFLOPs/s
 	}
+	inline Device_Info() {}; // default constructor
 };
 
 string get_opencl_c_code(); // implemented in kernel.hpp
@@ -150,8 +150,8 @@ private:
 	;}
 public:
 	Device_Info info;
-	inline Device(const Device_Info& d=select_device_with_most_flops(), const string& opencl_c_code=get_opencl_c_code()) {
-		info = d;
+	inline Device(const Device_Info& info, const string& opencl_c_code=get_opencl_c_code()) {
+		this->info = info;
 		cl_context = cl::Context(info.cl_device);
 		cl_queue = cl::CommandQueue(cl_context, info.cl_device); // queue to push commands for the device
 		cl::Program::Sources cl_source;
@@ -173,6 +173,7 @@ public:
 		write_file("bin/kernel.ptx", cl_program.getInfo<CL_PROGRAM_BINARIES>()[0]); // save binary (ptx file)
 #endif // PTX
 	}
+	inline Device() {} // default constructor
 	inline cl::Context get_cl_context() const {
 		return cl_context;
 	}
@@ -251,12 +252,15 @@ public:
 	}
 	inline Memory() {} // default constructor
 	inline ~Memory() {
-		const bool had_device_buffer = device_buffer_exists;
-		delete_buffers();
-		if(had_device_buffer) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
+		delete[] host_buffer;
+		device_buffer = nullptr;
+		if(device_buffer_exists) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
 	}
 	inline Memory& operator=(Memory&& memory) noexcept { // move assignment
-		N = memory.length();
+		delete[] host_buffer; // delete existing buffers
+		device_buffer = nullptr;
+		if(device_buffer_exists) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
+		N = memory.length(); // copy values/pointers from memory
 		d = memory.dimensions();
 		device = memory.device;
 		cl_queue = memory.device->get_cl_queue();
