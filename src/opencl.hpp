@@ -1,6 +1,6 @@
 #pragma once
 
-#define THREAD_BLOCK_SIZE 32
+#define WORKGROUP_SIZE 32
 //#define PTX
 //#define LOG
 //#define USE_OPENCL_1_1
@@ -27,7 +27,7 @@ struct Device_Info {
 	uint is_fp64_capable=0u, is_fp32_capable=0u, is_fp16_capable=0u, is_int64_capable=0u, is_int32_capable=0u, is_int16_capable=0u, is_int8_capable=0u;
 	uint cores=0u; // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
 	float tflops=0.0f; // estimated device floating point performance in TeraFLOPs/s
-	inline Device_Info() = default;
+	inline Device_Info() {}; // default constructor
 	inline Device_Info(const cl::Device& cl_device) {
 		this->cl_device = cl_device; // see https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceInfo.html
 		name = trim(cl_device.getInfo<CL_DEVICE_NAME>()); // device name
@@ -137,6 +137,7 @@ private:
 	cl::Program cl_program;
 	cl::CommandQueue cl_queue;
 	inline string enable_device_capabilities() const { return // enable FP64/FP16 capabilities if available
+		"\n	#define def_workgroup_size "+to_string(WORKGROUP_SIZE)+"u"
 		"\n	#ifdef cl_khr_fp64"
 		"\n	#pragma OPENCL EXTENSION cl_khr_fp64 : enable" // make sure cl_khr_fp64 extension is enabled
 		"\n	#endif"
@@ -191,8 +192,8 @@ private:
 	bool device_buffer_exists = false;
 	T* host_buffer = nullptr; // host buffer
 	cl::Buffer device_buffer; // device buffer
-	cl::CommandQueue cl_queue;
-	Device_Info* info = nullptr; // pointer to Device_Info of linked Device (for tracking memory usage)
+	cl::CommandQueue cl_queue; // command queue
+	Device* device = nullptr; // pointer to linked Device
 	void initialize_auxiliary_pointers() {
 		x = s0 = host_buffer;
 		if(d>0x1u) y = s1 = host_buffer+N;
@@ -213,11 +214,11 @@ private:
 	}
 	void allocate_device_buffer(Device& device, const bool allocate_device) {
 		if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
-		info = &(device.info);
+		this->device = &device;
 		cl_queue = device.get_cl_queue();
 		if(allocate_device) {
-			info->memory_used += (uint)(capacity()/1048576ull); // track device memory usage
-			if(info->memory_used>info->memory) print_error("Device \""+info->name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(info->memory_used)+" MB / "+to_string(info->memory)+" MB.");
+			device.info.memory_used += (uint)(capacity()/1048576ull); // track device memory usage
+			if(device.info.memory_used>device.info.memory) print_error("Device \""+device.info.name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(device.info.memory_used)+" MB / "+to_string(device.info.memory)+" MB.");
 			int error = 0;
 			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, capacity(), nullptr, &error);
 			if(error) print_error("OpenCL Buffer allocation failed with error code "+to_string(error)+".");
@@ -227,13 +228,13 @@ private:
 public:
 	T *x=nullptr, *y=nullptr, *z=nullptr, *w=nullptr; // host buffer auxiliary pointers for multi-dimensional array access (array of structures)
 	T *s0=nullptr, *s1=nullptr, *s2=nullptr, *s3=nullptr, *s4=nullptr, *s5=nullptr, *s6=nullptr, *s7=nullptr, *s8=nullptr, *s9=nullptr, *sA=nullptr, *sB=nullptr, *sC=nullptr, *sD=nullptr, *sE=nullptr, *sF=nullptr;
-	inline Memory(Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true) {
+	inline Memory(Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true, const T value=(T)0) {
 		this->N = N;
 		this->d = dimensions;
 		allocate_device_buffer(device, allocate_device);
 		if(allocate_host) {
-			host_buffer = new T[N*(ulong)dimensions];
-			for(ulong i=0ull; i<N*(ulong)dimensions; i++) host_buffer[i] = (T)0;
+			host_buffer = new T[N*(ulong)d];
+			for(ulong i=0ull; i<N*(ulong)d; i++) host_buffer[i] = value;
 			initialize_auxiliary_pointers();
 			host_buffer_exists = true;
 		}
@@ -248,10 +249,53 @@ public:
 		host_buffer_exists = true;
 		write_to_device();
 	}
+	inline Memory() {} // default constructor
 	inline ~Memory() {
+		const bool had_device_buffer = device_buffer_exists;
+		delete_buffers();
+		if(had_device_buffer) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
+	}
+	inline Memory& operator=(Memory&& memory) { // move assignment
+		N = memory.length();
+		d = memory.dimensions();
+		device = memory.device;
+		cl_queue = device->get_cl_queue();
+		if(memory.device_buffer_exists) {
+			device_buffer = memory.get_cl_buffer();
+			memory.delete_device_buffer(); // set memory.device_buffer_exists = false; for correct memory tracking
+			device_buffer_exists = true;
+		}
+		if(memory.host_buffer_exists) {
+			host_buffer = memory.exchange_host_buffer(nullptr);
+			initialize_auxiliary_pointers();
+			host_buffer_exists = true;
+		}
+		return *this;
+	}
+	inline T* const exchange_host_buffer(T* const host_buffer) { // sets host_buffer to new pointer and returns old pointer
+		T* const swap = this->host_buffer;
+		this->host_buffer = host_buffer;
+		return swap;
+	}
+	inline void delete_host_buffer() {
+		if(!device_buffer_exists) {
+			N = 0ull;
+			d = 1u;
+		}
+		host_buffer_exists = false;
 		delete[] host_buffer;
+	}
+	inline void delete_device_buffer() {
+		if(!host_buffer_exists) {
+			N = 0ull;
+			d = 1u;
+		}
+		device_buffer_exists = false;
 		device_buffer = nullptr;
-		if(device_buffer_exists) info->memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
+	}
+	inline void delete_buffers() {
+		delete_host_buffer();
+		delete_device_buffer();
 	}
 	inline void reset(const T value=(T)0) {
 		if(host_buffer_exists) for(ulong i=0ull; i<N*(ulong)d; i++) host_buffer[i] = value;
@@ -320,8 +364,8 @@ private:
 	cl::NDRange cl_range_global, cl_range_local;
 	cl::CommandQueue cl_queue;
 	inline void initialize_ranges(const ulong N) {
-		cl_range_local = cl::NDRange(THREAD_BLOCK_SIZE); // warp size is 32
-		cl_range_global = cl::NDRange(((N+THREAD_BLOCK_SIZE-1)/THREAD_BLOCK_SIZE)*THREAD_BLOCK_SIZE); // make global range a multiple of local range
+		cl_range_local = cl::NDRange(WORKGROUP_SIZE); // warp size is 32
+		cl_range_global = cl::NDRange(((N+WORKGROUP_SIZE-1)/WORKGROUP_SIZE)*WORKGROUP_SIZE); // make global range a multiple of local range
 	}
 public:
 	template<typename... T> inline Kernel(const Device& device, const ulong N, const string& name, const Memory<T>&... parameters) {
@@ -336,6 +380,7 @@ public:
 		initialize_ranges(N);
 		cl_queue = device.get_cl_queue();
 	}
+	inline Kernel() {} // default constructor
 	template<typename... T> inline void add_parameters(const Memory<T>&... parameters) {
 		(cl_kernel.setArg(number_of_parameters++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 	}
