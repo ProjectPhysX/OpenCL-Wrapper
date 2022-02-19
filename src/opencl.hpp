@@ -260,6 +260,9 @@ public:
 		delete[] host_buffer; // delete existing buffers
 		device_buffer = nullptr;
 		if(device_buffer_exists) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
+		host_buffer = nullptr;
+		host_buffer_exists = false;
+		device_buffer_exists = false;
 		N = memory.length(); // copy values/pointers from memory
 		d = memory.dimensions();
 		device = memory.device;
