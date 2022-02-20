@@ -214,9 +214,8 @@ private:
 		if(d>0xFu) sF = host_buffer+N*0xFull;
 	}
 	void allocate_device_buffer(Device& device, const bool allocate_device) {
-		if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
 		this->device = &device;
-		cl_queue = device.get_cl_queue();
+		this->cl_queue = device.get_cl_queue();
 		if(allocate_device) {
 			device.info.memory_used += (uint)(capacity()/1048576ull); // track device memory usage
 			if(device.info.memory_used>device.info.memory) print_error("Device \""+device.info.name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(device.info.memory_used)+" MB / "+to_string(device.info.memory)+" MB.");
@@ -230,6 +229,7 @@ public:
 	T *x=nullptr, *y=nullptr, *z=nullptr, *w=nullptr; // host buffer auxiliary pointers for multi-dimensional array access (array of structures)
 	T *s0=nullptr, *s1=nullptr, *s2=nullptr, *s3=nullptr, *s4=nullptr, *s5=nullptr, *s6=nullptr, *s7=nullptr, *s8=nullptr, *s9=nullptr, *sA=nullptr, *sB=nullptr, *sC=nullptr, *sD=nullptr, *sE=nullptr, *sF=nullptr;
 	inline Memory(Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true, const T value=(T)0) {
+		if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
 		this->N = N;
 		this->d = dimensions;
 		allocate_device_buffer(device, allocate_device);
@@ -242,6 +242,7 @@ public:
 		write_to_device();
 	}
 	inline Memory(Device& device, const ulong N, const uint dimensions, T* const host_buffer, const bool allocate_device=true) {
+		if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
 		this->N = N;
 		this->d = dimensions;
 		allocate_device_buffer(device, allocate_device);
@@ -283,6 +284,28 @@ public:
 		T* const swap = this->host_buffer;
 		this->host_buffer = host_buffer;
 		return swap;
+	}
+	inline void add_host_buffer() { // makes only sense if there is no host buffer yet but an existing device buffer
+		if(!host_buffer_exists&&device_buffer_exists) {
+			host_buffer = new T[N*(ulong)d];
+			initialize_auxiliary_pointers();
+			read_from_device();
+			host_buffer_exists = true;
+		} else if(host_buffer_exists) {
+			print_error("Host buffer already exists.");
+		} else if(!device_buffer_exists) {
+			print_error("There is no existing device buffer, so can't add host buffer.");
+		}
+	}
+	inline void add_device_buffer() { // makes only sense if there is no device buffer yet but an existing host buffer
+		if(!device_buffer_exists&&host_buffer_exists) {
+			allocate_device_buffer(*device, true);
+			write_to_device();
+		} else if(device_buffer_exists) {
+			print_error("Device buffer already exists.");
+		} else if(!host_buffer_exists) {
+			print_error("There is no existing host buffer, so can't add device buffer.");
+		}
 	}
 	inline void delete_host_buffer() {
 		if(!device_buffer_exists) {
