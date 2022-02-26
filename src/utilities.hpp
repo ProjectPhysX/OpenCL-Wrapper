@@ -577,17 +577,19 @@ inline bool is_number(const string& s) {
 	return equals_regex(s, "\\d+(u|l|ul|ll|ull)?")||equals_regex(s, "0x(\\d|[a-fA-F])+(u|l|ul|ll|ull)?")||equals_regex(s, "0b[01]+(u|l|ul|ll|ull)?")||equals_regex(s, "(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)");
 }
 inline void print_message(const string& message, const string& keyword="") { // print formatted message
-	const uint k=(uint)keyword.length(), w=CONSOLE_WIDTH-4u-k;
+	const uint k=length(keyword), w=CONSOLE_WIDTH-4u-k;
 	uint l = 0u;
 	string p="\r| "+keyword, f=" ";
 	for(uint j=0u; j<k; j++) f += " ";
-	vector<string> v = split_regex(trim(message));
+	vector<string> v = split_regex(message, "[\\s\\0]+");
 	for(uint i=0u; i<(uint)v.size(); i++) {
-		l += (uint)v.at(i).length()+1u;
-		if(l<=w+1u||(uint)v.at(i).length()>w) {
-			p += v.at(i)+" ";
+		const string word = v.at(i);
+		const uint wordlength = length(word);
+		l += wordlength+1u;
+		if(l<=w+1u||wordlength>w) {
+			p += word+" ";
 		} else {
-			l = l-(uint)v.at(i--).length()-1u;
+			l = l-length(v.at(i--))-1u;
 			for(uint j=l; j<=w; j++) p += " ";
 			p += "|\n|"+f;
 			l = 0u;

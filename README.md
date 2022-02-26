@@ -23,6 +23,12 @@ Works in both Windows and Linux with C++17.
    - easy Kernel execution
 4. OpenCL C code is embedded into C++
    - syntax highlighting in the code editor is retained
+   - notes / peculiarities of this workaround:
+     - the `#define R(...) string(" "#__VA_ARGS__" ")` stringification macro converts its arguments to string literals; `'\n'` is converted to `' '` in the process
+     - these string literals cannot be arbitrarily long, so interrupt them periodically with `)+R(`
+     - to use unbalanced round brackets `'('`/`')'`, exit the `R(...)` macro and insert a string literal manually: `)+"void function("+R(` and `)+") {"+R(`
+     - to use preprocessor macros, exit `R(...)` macro and insert a string literal manually: `)+"#define TEST"+R(` and `)+"#endif"+R( // TEST`
+     - preprocessor replacement macros (for example `#define VARIABLE 42`) don't work; hand these to the `Device` constructor directly instead
 
 ## No need to:
 - have code overhead for selecting a platform/device, passing the OpenCL C code, etc.
