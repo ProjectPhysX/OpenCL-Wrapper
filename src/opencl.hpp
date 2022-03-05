@@ -374,10 +374,16 @@ public:
 		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueWriteBuffer(device_buffer, blocking, 0u, capacity(), (void*)host_buffer);
 	}
 	inline void read_from_device(const ulong offset, const ulong length, const bool blocking=true) {
-		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueReadBuffer(device_buffer, blocking, min(offset, range())*sizeof(T), min(length, range()-offset)*sizeof(T), (void*)(host_buffer+min(offset, range())));
+		if(host_buffer_exists&&device_buffer_exists) {
+			const ulong safe_offset=min(offset, range()), safe_length=min(length, range()-safe_offset);
+			if(safe_length>0ull) cl_queue.enqueueReadBuffer(device_buffer, blocking, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+		}
 	}
 	inline void write_to_device(const ulong offset, const ulong length, const bool blocking=true) {
-		if(host_buffer_exists&&device_buffer_exists) cl_queue.enqueueWriteBuffer(device_buffer, blocking, min(offset, range())*sizeof(T), min(length, range()-offset)*sizeof(T), (void*)(host_buffer+min(offset, range())));
+		if(host_buffer_exists&&device_buffer_exists) {
+			const ulong safe_offset=min(offset, range()), safe_length=min(length, range()-safe_offset);
+			if(safe_length>0ull) cl_queue.enqueueWriteBuffer(device_buffer, blocking, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+		}
 	}
 	inline void finish() {
 		cl_queue.finish();
