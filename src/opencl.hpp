@@ -65,16 +65,16 @@ struct Device_Info {
 
 string get_opencl_c_code(); // implemented in kernel.hpp
 inline void print_device_info(const Device_Info& d, const int id=-1) { // print OpenCL device info
-	println("\r|----------------.--------------------------------------------------|");
-	if(id>-1) println("| Device ID      | "+alignl(48, to_string(id))+" |");
-	println("| Device Name    | "+alignl(48, d.name                 )+" |");
-	println("| Device Vendor  | "+alignl(48, d.vendor               )+" |");
-	println("| Device Driver  | "+alignl(48, d.driver_version       )+" |");
-	println("| OpenCL Version | "+alignl(48, d.opencl_c_version     )+" |");
-	println("| Compute Units  | "+alignl(48, to_string(d.compute_units)+" at "+to_string(d.clock_frequency)+" MHz ("+to_string(d.cores)+" cores, "+to_string(d.tflops, 3)+" TFLOPs/s)")+" |");
-	println("| Memory, Cache  | "+alignl(48, to_string(d.memory)+" MB, "+to_string(d.global_cache)+" KB global / "+to_string(d.local_cache)+" KB local")+" |");
-	println("| Max Alloc Size | "+alignl(48, to_string(d.max_global_buffer)+" MB global, "+to_string(d.max_constant_buffer)+" KB constant")+" |");
-	println("|----------------'--------------------------------------------------|");
+	println("\r|----------------.------------------------------------------------------------|");
+	if(id>-1) println("| Device ID      | "+alignl(58, to_string(id))+" |");
+	println("| Device Name    | "+alignl(58, d.name                 )+" |");
+	println("| Device Vendor  | "+alignl(58, d.vendor               )+" |");
+	println("| Device Driver  | "+alignl(58, d.driver_version       )+" |");
+	println("| OpenCL Version | "+alignl(58, d.opencl_c_version     )+" |");
+	println("| Compute Units  | "+alignl(58, to_string(d.compute_units)+" at "+to_string(d.clock_frequency)+" MHz ("+to_string(d.cores)+" cores, "+to_string(d.tflops, 3)+" TFLOPs/s)")+" |");
+	println("| Memory, Cache  | "+alignl(58, to_string(d.memory)+" MB, "+to_string(d.global_cache)+" KB global / "+to_string(d.local_cache)+" KB local")+" |");
+	println("| Buffer Limits  | "+alignl(58, to_string(d.max_global_buffer)+" MB global, "+to_string(d.max_constant_buffer)+" KB constant")+" |");
+	println("|----------------'------------------------------------------------------------|");
 }
 inline vector<Device_Info> get_devices() { // returns a vector of all available OpenCL devices
 	vector<Device_Info> devices; // get all devices of all platforms
@@ -90,11 +90,11 @@ inline vector<Device_Info> get_devices() { // returns a vector of all available 
 	if((uint)cl_platforms.size()==0u||(uint)devices.size()==0u) {
 		print_error("There are no OpenCL devices available. Make sure that the OpenCL 1.2 Runtime for your device is installed. For GPUs it comes by default with the graphics driver, for CPUs it has to be installed separately.");
 	}
-	println("\r|----------------.--------------------------------------------------|");
+	println("\r|----------------.------------------------------------------------------------|");
 	for(uint i=0u; i<(uint)devices.size(); i++) {
-		println("| Device ID "+alignr(4u, i)+" | "+alignl(48u, devices[i].name)+" |");
+		println("| Device ID "+alignr(4u, i)+" | "+alignl(58u, devices[i].name)+" |");
 	}
-	println("|----------------'--------------------------------------------------|");
+	println("|----------------'------------------------------------------------------------|");
 	return devices;
 }
 inline Device_Info select_device_with_most_flops(const vector<Device_Info>& devices=get_devices()) { // returns device with best floating-point performance
@@ -253,32 +253,25 @@ public:
 	}
 	inline Memory() {} // default constructor
 	inline ~Memory() {
-		delete[] host_buffer;
-		device_buffer = nullptr;
-		if(device_buffer_exists) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
+		delete_buffers();
 	}
 	inline Memory& operator=(Memory&& memory) noexcept { // move assignment
-		delete[] host_buffer; // delete existing buffers
-		device_buffer = nullptr;
-		if(device_buffer_exists) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
-		host_buffer = nullptr;
-		host_buffer_exists = false;
-		device_buffer_exists = false;
+		delete_buffers(); // delete existing buffers and restore default state
 		N = memory.length(); // copy values/pointers from memory
 		d = memory.dimensions();
 		device = memory.device;
 		cl_queue = memory.device->get_cl_queue();
 		if(memory.device_buffer_exists) {
-			device_buffer = memory.get_cl_buffer();
-			memory.delete_device_buffer(); // set memory.device_buffer_exists = false; for correct memory tracking
+			device_buffer = memory.get_cl_buffer(); // transfer device_buffer pointer
+			device->info.memory_used += (uint)(capacity()/1048576ull); // track device memory usage
 			device_buffer_exists = true;
 		}
 		if(memory.host_buffer_exists) {
-			host_buffer = memory.exchange_host_buffer(nullptr);
+			host_buffer = memory.exchange_host_buffer(nullptr); // transfer host_buffer pointer
 			initialize_auxiliary_pointers();
 			host_buffer_exists = true;
 		}
-		return *this;
+		return *this; // destructor of memory will be called automatically
 	}
 	inline T* const exchange_host_buffer(T* const host_buffer) { // sets host_buffer to new pointer and returns old pointer
 		T* const swap = this->host_buffer;
@@ -308,24 +301,25 @@ public:
 		}
 	}
 	inline void delete_host_buffer() {
+		host_buffer_exists = false;
+		delete[] host_buffer;
 		if(!device_buffer_exists) {
 			N = 0ull;
 			d = 1u;
 		}
-		host_buffer_exists = false;
-		delete[] host_buffer;
 	}
 	inline void delete_device_buffer() {
+		if(device_buffer_exists) device->info.memory_used -= (uint)(capacity()/1048576ull); // track device memory usage
+		device_buffer_exists = false;
+		device_buffer = nullptr;
 		if(!host_buffer_exists) {
 			N = 0ull;
 			d = 1u;
 		}
-		device_buffer_exists = false;
-		device_buffer = nullptr;
 	}
 	inline void delete_buffers() {
-		delete_host_buffer();
 		delete_device_buffer();
+		delete_host_buffer();
 	}
 	inline void reset(const T value=(T)0) {
 		if(host_buffer_exists) for(ulong i=0ull; i<N*(ulong)d; i++) host_buffer[i] = value;
