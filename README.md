@@ -20,6 +20,8 @@ Works in both Windows and Linux with C++17.
    - automatically tracks total global memory usage of device when allocating/deleting memory
 3. create a `Kernel` with 1 line
    - Memory objects are linked to OpenCL C kernel parameters during Kernel creation
+   - a list of Memory objects or constants can be added to Kernel parameters in one line (`add_parameters(...)`/`add_constants(...)`)
+   - Kernel parameters can be edited (`set_parameter(...)`/`set_constant(...)`)
    - easy Kernel execution
 4. OpenCL C code is embedded into C++
    - syntax highlighting in the code editor is retained
