@@ -284,8 +284,6 @@ public:
 			initialize_auxiliary_pointers();
 			read_from_device();
 			host_buffer_exists = true;
-		} else if(host_buffer_exists) {
-			print_error("Host buffer already exists.");
 		} else if(!device_buffer_exists) {
 			print_error("There is no existing device buffer, so can't add host buffer.");
 		}
@@ -294,8 +292,6 @@ public:
 		if(!device_buffer_exists&&host_buffer_exists) {
 			allocate_device_buffer(*device, true);
 			write_to_device();
-		} else if(device_buffer_exists) {
-			print_error("Device buffer already exists.");
 		} else if(!host_buffer_exists) {
 			print_error("There is no existing host buffer, so can't add device buffer.");
 		}
@@ -418,7 +414,19 @@ public:
 		(cl_kernel.setArg(number_of_parameters++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 	}
 	template<typename... T> inline void add_constants(const T... constants) {
-		(cl_kernel.setArg(number_of_parameters++, constants), ...); // expand variadic template to pass constants as kernel parameters
+		(cl_kernel.setArg(number_of_parameters++, sizeof(T), (void*)&constants), ...); // expand variadic template to pass constants as kernel parameters
+	}
+	template<typename T> inline void set_parameter(const uint position, const Memory<T>& parameter) { // set parameter at specified position
+		cl_kernel.setArg(position, parameter.get_cl_buffer());
+		number_of_parameters = max(number_of_parameters, position+1u);
+	}
+	template<typename T> inline void set_parameter(const uint position, const Memory<T>* parameter) { // set parameter at specified position
+		cl_kernel.setArg(position, parameter->get_cl_buffer());
+		number_of_parameters = max(number_of_parameters, position+1u);
+	}
+	template<typename T> inline void set_constant(const uint position, const T constant) { // set constant at specified position
+		cl_kernel.setArg(position, sizeof(T), (void*)&constant);
+		number_of_parameters = max(number_of_parameters, position+1u);
 	}
 	inline void run() const {
 		cl_queue.enqueueNDRangeKernel(cl_kernel, cl::NullRange, cl_range_global, cl_range_local);
