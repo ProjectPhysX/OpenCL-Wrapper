@@ -1,6 +1,6 @@
 #pragma once
 
-#define WORKGROUP_SIZE 32
+#define WORKGROUP_SIZE 64 // needs to be 64 to fully use AMD GPUs
 //#define PTX
 //#define LOG
 //#define USE_OPENCL_1_1
