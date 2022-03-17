@@ -507,7 +507,7 @@ inline bool begins_with(const string& s, const string& match) {
 }
 inline bool ends_with(const string& s, const string& match) {
 	if(match.size()>s.size()) return false;
-    else return equal(match.rbegin(), match.rend(), s.rbegin());
+	else return equal(match.rbegin(), match.rend(), s.rbegin());
 }
 template<class T> inline bool contains(const vector<T>& v, const T& match) {
 	return find(v.begin(), v.end(), match)!=v.end();
