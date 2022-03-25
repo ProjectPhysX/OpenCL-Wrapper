@@ -136,6 +136,7 @@ private:
 	cl::Context cl_context;
 	cl::Program cl_program;
 	cl::CommandQueue cl_queue;
+	bool exists = false;
 	inline string enable_device_capabilities() const { return // enable FP64/FP16 capabilities if available
 		"\n	#define def_workgroup_size "+to_string(WORKGROUP_SIZE)+"u"
 		"\n	#ifdef cl_khr_fp64"
@@ -172,6 +173,7 @@ public:
 #ifdef PTX // generate assembly (ptx) file for OpenCL code
 		write_file("bin/kernel.ptx", cl_program.getInfo<CL_PROGRAM_BINARIES>()[0]); // save binary (ptx file)
 #endif // PTX
+		this->exists = true;
 	}
 	inline Device() {} // default constructor
 	inline cl::Context get_cl_context() const {
@@ -182,6 +184,9 @@ public:
 	}
 	inline cl::CommandQueue get_cl_queue() const {
 		return cl_queue;
+	}
+	inline bool is_initialized() const {
+		return exists;
 	}
 };
 
@@ -229,7 +234,8 @@ public:
 	T *x=nullptr, *y=nullptr, *z=nullptr, *w=nullptr; // host buffer auxiliary pointers for multi-dimensional array access (array of structures)
 	T *s0=nullptr, *s1=nullptr, *s2=nullptr, *s3=nullptr, *s4=nullptr, *s5=nullptr, *s6=nullptr, *s7=nullptr, *s8=nullptr, *s9=nullptr, *sA=nullptr, *sB=nullptr, *sC=nullptr, *sD=nullptr, *sE=nullptr, *sF=nullptr;
 	inline Memory(Device& device, const ulong N, const uint dimensions=1u, const bool allocate_host=true, const bool allocate_device=true, const T value=(T)0) {
-		if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
+		if(!device.is_initialized()) print_error("No Device selected. Call Device constructor.");
+		else if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
 		this->N = N;
 		this->d = dimensions;
 		allocate_device_buffer(device, allocate_device);
@@ -242,7 +248,8 @@ public:
 		write_to_device();
 	}
 	inline Memory(Device& device, const ulong N, const uint dimensions, T* const host_buffer, const bool allocate_device=true) {
-		if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
+		if(!device.is_initialized()) print_error("No Device selected. Call Device constructor.");
+		else if(N*(ulong)d==0ull) print_error("Memory size must be larger than 0.");
 		this->N = N;
 		this->d = dimensions;
 		allocate_device_buffer(device, allocate_device);
@@ -395,12 +402,14 @@ private:
 	}
 public:
 	template<typename... T> inline Kernel(const Device& device, const ulong N, const string& name, const Memory<T>&... parameters) {
+		if(!device.is_initialized()) print_error("No Device selected. Call Device constructor.");
 		cl_kernel = cl::Kernel(device.get_cl_program(), name.c_str());
 		(cl_kernel.setArg(number_of_parameters++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 		initialize_ranges(N);
 		cl_queue = device.get_cl_queue();
 	}
 	template<typename... T> inline Kernel(const Device& device, const ulong N, const string& name, const Memory<T>*... parameters) {
+		if(!device.is_initialized()) print_error("No Device selected. Call Device constructor.");
 		cl_kernel = cl::Kernel(device.get_cl_program(), name.c_str());
 		(cl_kernel.setArg(number_of_parameters++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 		initialize_ranges(N);
