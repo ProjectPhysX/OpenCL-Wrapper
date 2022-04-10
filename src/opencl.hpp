@@ -126,7 +126,7 @@ inline Device_Info select_device_with_id(const uint id, const vector<Device_Info
 		print_device_info(devices[id], id);
 		return devices[id];
 	} else {
-		print_error("Your selected device ID ("+to_string(id)+") is wrong. Check the setting \"#define DEVICE x\" in defines.hpp.");
+		print_error("Your selected device ID ("+to_string(id)+") is wrong.");
 		return devices[0]; // is never executed, just to avoid compiler warnings
 	}
 }
