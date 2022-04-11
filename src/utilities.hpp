@@ -3,7 +3,7 @@
 #define UTILITIES_REGEX
 #define UTILITIES_FILE
 #define CONSOLE_WIDTH 79
-//#define UTILITIES_NO_CPP17
+#define UTILITIES_NO_CPP17
 
 #pragma warning(disable:26451)
 #pragma warning(disable:6386)

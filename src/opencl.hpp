@@ -126,7 +126,7 @@ inline Device_Info select_device_with_id(const uint id, const vector<Device_Info
 		print_device_info(devices[id], id);
 		return devices[id];
 	} else {
-		print_error("Your selected device ID ("+to_string(id)+") is wrong.");
+		print_error("Your selected Device ID ("+to_string(id)+") is wrong.");
 		return devices[0]; // is never executed, just to avoid compiler warnings
 	}
 }
@@ -168,7 +168,7 @@ public:
 		write_file("bin/kernel.log", log); // save build log
 		if((uint)log.length()>2u) print_warning(log); // print build log
 #endif // LOG
-		if(error) print_error("OpenCL C code compilation failed. Make sure there are no errors in kernel.cpp (\"#define LOG\" might help). If your GPU is old, try uncommenting \"#define USE_OPENCL_1_1\".");
+		if(error) print_error("OpenCL C code compilation failed with error code "+to_string(error)+". Make sure there are no errors in kernel.cpp (\"#define LOG\" might help). If your GPU is old, try uncommenting \"#define USE_OPENCL_1_1\".");
 		else print_info("OpenCL C code successfully compiled.");
 #ifdef PTX // generate assembly (ptx) file for OpenCL code
 		write_file("bin/kernel.ptx", cl_program.getInfo<CL_PROGRAM_BINARIES>()[0]); // save binary (ptx file)
@@ -226,7 +226,8 @@ private:
 			if(device.info.memory_used>device.info.memory) print_error("Device \""+device.info.name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(device.info.memory_used)+" MB / "+to_string(device.info.memory)+" MB.");
 			int error = 0;
 			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, capacity(), nullptr, &error);
-			if(error) print_error("OpenCL Buffer allocation failed with error code "+to_string(error)+".");
+			if(error==-61) print_error("Memory size is too large at "+to_string((uint)(capacity()/1048576ull))+" MB. Device \""+device.info.name+"\" accepts a maximum buffer size of "+to_string(device.info.max_global_buffer)+" MB.");
+			else if(error) print_error("Device buffer allocation failed with error code "+to_string(error)+".");
 			device_buffer_exists = true;
 		}
 	}
