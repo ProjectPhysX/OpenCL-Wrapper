@@ -7,7 +7,6 @@
 
 #pragma warning(disable:26451)
 #pragma warning(disable:6386)
-#define to_string to_string_old // use own to_string methods
 #include <cmath>
 #include <vector>
 #ifdef UTILITIES_REGEX
@@ -15,12 +14,11 @@
 #else // UTILITIES_REGEX
 #include <string>
 #endif // UTILITIES_REGEX
-#undef to_string // use own to_string methods
 #include <iostream>
 #include <thread> // contains <chrono>
 #undef min
 #undef max
-using namespace std;
+using std::string, std::vector, std::thread;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
@@ -49,15 +47,15 @@ typedef uint64_t ulong;
 
 class Clock {
 private:
-	typedef chrono::high_resolution_clock clock;
-	chrono::time_point<clock> t;
+	typedef std::chrono::high_resolution_clock clock;
+	std::chrono::time_point<clock> t;
 public:
 	Clock() { start(); }
 	void start() { t = clock::now(); }
-	double stop() const { return chrono::duration_cast<chrono::duration<double>>(clock::now()-t).count(); }
+	double stop() const { return std::chrono::duration_cast<std::chrono::duration<double>>(clock::now()-t).count(); }
 };
 inline void sleep(const double t) {
-	if(t>0.0) this_thread::sleep_for(chrono::milliseconds((int)(1E3*t+0.5)));
+	if(t>0.0) std::this_thread::sleep_for(std::chrono::milliseconds((int)(1E3*t+0.5)));
 }
 
 inline float as_float(const uint x) {
@@ -532,16 +530,16 @@ template<typename T> inline string alignr(const uint n, const T x) { // converts
 }
 
 inline void print(const string& s="") {
-	cout << s;
+	std::cout << s;
 }
 inline void println(const string& s="") {
-	cout << s << endl;
+	std::cout << s+'\n';
 }
 inline void reprint(const string& s="") {
-	cout << "\r"+s;
+	std::cout << "\r"+s;
 }
 inline void wait() {
-	cin.get();
+	std::cin.get();
 }
 template<typename T> inline void println(const T x) {
 	println(to_string(x));
@@ -550,8 +548,8 @@ template<typename T> inline void println(const T x) {
 #ifdef UTILITIES_REGEX
 inline vector<string> split_regex(const string& s, const string& separator="\\s+") {
 	vector<string> r;
-	const regex rgx(separator);
-	sregex_token_iterator token(s.begin(), s.end()+1, rgx, -1), end;
+	const std::regex rgx(separator);
+	std::sregex_token_iterator token(s.begin(), s.end()+1, rgx, -1), end;
 	while(token!=end) {
 		r.push_back(*token);
 		token++;
@@ -559,19 +557,19 @@ inline vector<string> split_regex(const string& s, const string& separator="\\s+
 	return r;
 }
 inline bool equals_regex(const string& s, const string& match) { // returns true if string exactly matches regex
-	return regex_match(s.begin(), s.end(), regex(match));
+	return regex_match(s.begin(), s.end(), std::regex(match));
 }
 inline uint matches_regex(const string& s, const string& match) { // counts number of matches
-	regex words_regex(match);
-	auto words_begin = sregex_iterator(s.begin(), s.end(), words_regex);
-	auto words_end = sregex_iterator();
-	return (uint)distance(words_begin, words_end);
+	std::regex words_regex(match);
+	auto words_begin = std::sregex_iterator(s.begin(), s.end(), words_regex);
+	auto words_end = std::sregex_iterator();
+	return (uint)std::distance(words_begin, words_end);
 }
 inline bool contains_regex(const string& s, const string& match) {
 	return matches_regex(s, match)>=1;
 }
 inline string replace_regex(const string& s, const string& from, const string& to) {
-	return regex_replace(s, regex(from), to);
+	return regex_replace(s, std::regex(from), to);
 }
 inline bool is_number(const string& s) {
 	return equals_regex(s, "\\d+(u|l|ul|ll|ull)?")||equals_regex(s, "0x(\\d|[a-fA-F])+(u|l|ul|ll|ull)?")||equals_regex(s, "0b[01]+(u|l|ul|ll|ull)?")||equals_regex(s, "(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)");
@@ -679,15 +677,15 @@ inline string create_file_extension(const string& path, const string& extension)
 	return path.substr(0, path.rfind('.'))+(extension.at(0)!='.'?".":"")+extension; // remove existing file extension if existing and replace it with new one
 }
 inline string read_file(const string& path) {
-	ifstream file(path, ios::in);
+	std::ifstream file(path, std::ios::in);
 	if(file.fail()) println("\rError: File \""+path+"\" does not exist!");
-	const string r((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+	const string r((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	file.close();
 	return r;
 }
 inline void write_file(const string& path, const string& content="") {
 	create_folder(path);
-	ofstream file(path, ios::out);
+	std::ofstream file(path, std::ios::out);
 	file.write(content.c_str(), content.length());
 	file.close();
 }

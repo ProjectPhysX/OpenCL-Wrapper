@@ -8,9 +8,7 @@
 #ifdef USE_OPENCL_1_1
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #endif // USE_OPENCL_1_1
-#define to_string to_string_old // use own to_string methods
 #include <CL/cl.hpp> // old version (OpenCL 1.0, 1.1, 1.2)
-#undef to_string // use own to_string methods
 #include "utilities.hpp"
 
 struct Device_Info {
