@@ -409,8 +409,8 @@ inline string to_string(int x) {
 inline string to_string(float x) { // convert float to string with full precision (<string> to_string() prints only 6 decimals)
 	string s = "";
 	if(x<0.0f) { s += "-"; x = -x; }
-	if(isnan(x)) return s+"NaN";
-	if(isinf(x)) return s+"Inf";
+	if(std::isnan(x)) return s+"NaN";
+	if(std::isinf(x)) return s+"Inf";
 	uint integral, decimal;
 	int exponent = 0;
 	split_float(x, integral, decimal, exponent);
@@ -419,8 +419,8 @@ inline string to_string(float x) { // convert float to string with full precisio
 inline string to_string(double x) { // convert double to string with full precision (<string> to_string() prints only 6 decimals)
 	string s = "";
 	if(x<0.0) { s += "-"; x = -x; }
-	if(isnan(x)) return s+"NaN";
-	if(isinf(x)) return s+"Inf";
+	if(std::isnan(x)) return s+"NaN";
+	if(std::isinf(x)) return s+"Inf";
 	uint integral;
 	ulong decimal;
 	int exponent = 0;
@@ -430,8 +430,8 @@ inline string to_string(double x) { // convert double to string with full precis
 inline string to_string(float x, const uint decimals) { // convert float to string with specified number of decimals
 	string s = "";
 	if(x<0.0f) { s += "-"; x = -x; }
-	if(isnan(x)) return s+"NaN";
-	if(isinf(x)||x>(float)max_ulong) return s+"Inf";
+	if(std::isnan(x)) return s+"NaN";
+	if(std::isinf(x)||x>(float)max_ulong) return s+"Inf";
 	const float power = pow(10.0f, min(decimals, 8u));
 	x += 0.5f/power; // rounding
 	const ulong integral = (ulong)x;
@@ -441,8 +441,8 @@ inline string to_string(float x, const uint decimals) { // convert float to stri
 inline string to_string(double x, const uint decimals) { // convert float to string with specified number of decimals
 	string s = "";
 	if(x<0.0) { s += "-"; x = -x; }
-	if(isnan(x)) return s+"NaN";
-	if(isinf(x)||x>(double)max_ulong) return s+"Inf";
+	if(std::isnan(x)) return s+"NaN";
+	if(std::isinf(x)||x>(double)max_ulong) return s+"Inf";
 	const double power = pow(10.0, min(decimals, 16u));
 	x += 0.5/power; // rounding
 	const ulong integral = (ulong)x;
