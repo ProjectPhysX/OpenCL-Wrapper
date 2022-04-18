@@ -49,7 +49,7 @@ struct Device_Info {
 		is_gpu = cl_device.getInfo<CL_DEVICE_TYPE>()==CL_DEVICE_TYPE_GPU;
 		const uint ipc = is_gpu?2u:32u; // IPC (instructions per cycle) is 2 for GPUs and 32 for most modern CPUs
 		const bool nvidia_192_cores_per_cu = contains_any(to_lower(name), {" 6", " 7", "ro k", "la k"}) || (clock_frequency<1000u&&contains(to_lower(name), "titan")); // identify Kepler GPUs
-		const bool nvidia_64_cores_per_cu = contains_any(to_lower(name), {"p100", "v100", "a100", "a30", " 16", " 20", "titan v", "titan rtx", "ro t", "la t", "ro rtx"}) && !contains(to_lower(name), "rtx a"); // identify P100, Volta, Turing, A100
+		const bool nvidia_64_cores_per_cu = contains_any(to_lower(name), {"p100", "v100", "a100", "a30", " 16", " 20", "titan v", "titan rtx", "ro t", "la t", "ro rtx"}) && !contains(to_lower(name), "rtx a"); // identify P100, Volta, Turing, A100, A30
 		const bool amd_128_cores_per_dualcu = contains(to_lower(name), "gfx10"); // identify RDNA/RDNA2 GPUs where dual CUs are reported
 		const float nvidia = (float)(contains(to_lower(vendor), "nvidia"))*(nvidia_192_cores_per_cu?192.0f:(nvidia_64_cores_per_cu?64.0f:128.0f)); // Nvidia GPUs have 192 cores/CU (Kepler), 128 cores/CU (Maxwell, Pascal, Ampere) or 64 cores/CU (P100, Volta, Turing, A100)
 		const float amd = (float)(contains_any(to_lower(vendor), {"amd", "advanced"}))*(is_gpu?(amd_128_cores_per_dualcu?128.0f:64.0f):0.5f); // AMD GPUs have 64 cores/CU (GCN, CDNA) or 128 cores/dualCU (RDNA, RDNA2), AMD CPUs (with SMT) have 1/2 core/CU
@@ -415,29 +415,47 @@ public:
 		cl_queue = device.get_cl_queue();
 	}
 	inline Kernel() {} // default constructor
-	template<typename... T> inline void add_parameters(const Memory<T>&... parameters) {
+	inline uint get_number_of_parameters() const {
+		return number_of_parameters;
+	}
+	template<typename... T> inline Kernel& add_parameters(const Memory<T>&... parameters) {
 		(cl_kernel.setArg(number_of_parameters++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
+		return *this;
 	}
-	template<typename... T> inline void add_parameters(const Memory<T>*... parameters) {
+	template<typename... T> inline Kernel& add_parameters(const Memory<T>*... parameters) {
 		(cl_kernel.setArg(number_of_parameters++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
+		return *this;
 	}
-	template<typename... T> inline void add_constants(const T... constants) {
+	template<typename... T> inline Kernel& add_constants(const T... constants) {
 		(cl_kernel.setArg(number_of_parameters++, sizeof(T), (void*)&constants), ...); // expand variadic template to pass constants as kernel parameters
+		return *this;
 	}
-	template<typename T> inline void set_parameter(const uint position, const Memory<T>& parameter) { // set parameter at specified position
-		cl_kernel.setArg(position, parameter.get_cl_buffer());
-		number_of_parameters = max(number_of_parameters, position+1u);
+	template<typename... T> inline Kernel& set_parameters(const uint starting_position, const Memory<T>&... parameters) { // set parameter at specified position
+		uint position = starting_position;
+		(cl_kernel.setArg(position++, parameters.get_cl_buffer()), ...); // expand variadic template to pass constants as kernel parameters
+		number_of_parameters = max(number_of_parameters, position);
+		return *this;
 	}
-	template<typename T> inline void set_parameter(const uint position, const Memory<T>* parameter) { // set parameter at specified position
-		cl_kernel.setArg(position, parameter->get_cl_buffer());
-		number_of_parameters = max(number_of_parameters, position+1u);
+	template<typename... T> inline Kernel& set_parameters(const uint starting_position, const Memory<T>*... parameters) { // set parameter at specified position
+		uint position = starting_position;
+		(cl_kernel.setArg(position++, parameters->get_cl_buffer()), ...); // expand variadic template to pass constants as kernel parameters
+		number_of_parameters = max(number_of_parameters, position);
+		return *this;
 	}
-	template<typename T> inline void set_constant(const uint position, const T constant) { // set constant at specified position
-		cl_kernel.setArg(position, sizeof(T), (void*)&constant);
-		number_of_parameters = max(number_of_parameters, position+1u);
+	template<typename... T> inline Kernel& set_constants(const uint starting_position, const T... constants) { // set constant at specified position
+		uint position = starting_position;
+		(cl_kernel.setArg(position++, sizeof(T), (void*)&constants), ...); // expand variadic template to pass constants as kernel parameters
+		number_of_parameters = max(number_of_parameters, position);
+		return *this;
 	}
-	inline void run() const {
-		cl_queue.enqueueNDRangeKernel(cl_kernel, cl::NullRange, cl_range_global, cl_range_local);
+	inline Kernel& run(const uint t=1u) {
+		for(uint i=0u; i<t; i++) {
+			cl_queue.enqueueNDRangeKernel(cl_kernel, cl::NullRange, cl_range_global, cl_range_local);
+		}
 		cl_queue.finish();
+		return *this;
+	}
+	inline Kernel& operator()(const uint t=1u) {
+		return run(t);
 	}
 };

@@ -21,7 +21,7 @@ Works in both Windows and Linux with C++17.
 3. create a `Kernel` with 1 line
    - Memory objects are linked to OpenCL C kernel parameters during Kernel creation
    - a list of Memory objects or constants can be added to Kernel parameters in one line (`add_parameters(...)`/`add_constants(...)`)
-   - Kernel parameters can be edited (`set_parameter(...)`/`set_constant(...)`)
+   - Kernel parameters can be edited (`set_parameters(...)`/`set_constants(...)`)
    - easy Kernel execution
 4. OpenCL C code is embedded into C++
    - syntax highlighting in the code editor is retained
@@ -130,7 +130,7 @@ int main() {
 			const bool is_gpu = cl_devices[i].getInfo<CL_DEVICE_TYPE>()==CL_DEVICE_TYPE_GPU;
 			const uint ipc = is_gpu?2u:32u; // IPC (instructions per cycle) is 2 for GPUs and 32 for most modern CPUs
 			const bool nvidia_192_cores_per_cu = contains_any(to_lower(name), {" 6", " 7", "ro k", "la k"}) || (clock_frequency<1000u&&contains(to_lower(name), "titan")); // identify Kepler GPUs
-			const bool nvidia_64_cores_per_cu = contains_any(to_lower(name), {"p100", "v100", "a100", "a30", " 16", " 20", "titan v", "titan rtx", "ro t", "la t", "ro rtx"}) && !contains(to_lower(name), "rtx a"); // identify P100, Volta, Turing, A100
+			const bool nvidia_64_cores_per_cu = contains_any(to_lower(name), {"p100", "v100", "a100", "a30", " 16", " 20", "titan v", "titan rtx", "ro t", "la t", "ro rtx"}) && !contains(to_lower(name), "rtx a"); // identify P100, Volta, Turing, A100, A30
 			const bool amd_128_cores_per_dualcu = contains(to_lower(name), "gfx10"); // identify RDNA/RDNA2 GPUs where dual CUs are reported
 			const float nvidia = (float)(contains(to_lower(vendor), "nvidia"))*(nvidia_192_cores_per_cu?192.0f:(nvidia_64_cores_per_cu?64.0f:128.0f)); // Nvidia GPUs have 192 cores/CU (Kepler), 128 cores/CU (Maxwell, Pascal, Ampere) or 64 cores/CU (P100, Volta, Turing, A100)
 			const float amd = (float)(contains_any(to_lower(vendor), {"amd", "advanced"}))*(is_gpu?(amd_128_cores_per_dualcu?128.0f:64.0f):0.5f); // AMD GPUs have 64 cores/CU (GCN, CDNA) or 128 cores/dualCU (RDNA, RDNA2), AMD CPUs (with SMT) have 1/2 core/CU
