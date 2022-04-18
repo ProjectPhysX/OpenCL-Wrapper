@@ -432,13 +432,13 @@ public:
 	}
 	template<typename... T> inline Kernel& set_parameters(const uint starting_position, const Memory<T>&... parameters) { // set parameter at specified position
 		uint position = starting_position;
-		(cl_kernel.setArg(position++, parameters.get_cl_buffer()), ...); // expand variadic template to pass constants as kernel parameters
+		(cl_kernel.setArg(position++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 		number_of_parameters = max(number_of_parameters, position);
 		return *this;
 	}
 	template<typename... T> inline Kernel& set_parameters(const uint starting_position, const Memory<T>*... parameters) { // set parameter at specified position
 		uint position = starting_position;
-		(cl_kernel.setArg(position++, parameters->get_cl_buffer()), ...); // expand variadic template to pass constants as kernel parameters
+		(cl_kernel.setArg(position++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
 		number_of_parameters = max(number_of_parameters, position);
 		return *this;
 	}
