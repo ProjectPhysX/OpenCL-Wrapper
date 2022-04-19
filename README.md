@@ -22,7 +22,8 @@ Works in both Windows and Linux with C++17.
    - Memory objects are linked to OpenCL C kernel parameters during Kernel creation
    - a list of Memory objects or constants can be added to Kernel parameters in one line (`add_parameters(...)`/`add_constants(...)`)
    - Kernel parameters can be edited (`set_parameters(...)`/`set_constants(...)`)
-   - easy Kernel execution
+   - easy Kernel execution: `kernel.run();`
+   - Kernel function calls can be daisy chained, for example: `kernel.set_constants(3u, time).run();`
 4. OpenCL C code is embedded into C++
    - syntax highlighting in the code editor is retained
    - notes / peculiarities of this workaround:
