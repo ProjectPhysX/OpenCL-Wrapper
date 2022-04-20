@@ -1,5 +1,5 @@
 # OpenCL-Wrapper
-OpenCL is the most powerful programming language ever created. Yet the OpenCL C++ bindings are very cumbersome and the code overhead prevents many people from getting started.
+OpenCL is the most powerful programming language ever created. Yet the OpenCL C++ bindings are cumbersome and the code overhead prevents many people from getting started.
 I created this lightweight OpenCL-Wrapper to greatly simplify OpenCL software development with C++ while keeping functionality and performance.
 
 Works in both Windows and Linux with C++17.
@@ -96,12 +96,10 @@ kernel void add_kernel(global float* A, global float* B, global float* C) { // e
 
 ### For comparison, the very same OpenCL vector addition example looks like this when directly using the OpenCL C++ bindings:
 ```c
-#define to_string to_string_old // use own to_string methods
 #include <CL/cl.hpp>
-#undef to_string // use own to_string methods
 #include "utilities.hpp"
 
-#define THREAD_BLOCK_SIZE 32
+#define THREAD_BLOCK_SIZE 64
 
 int main() {
 
@@ -172,7 +170,7 @@ int main() {
 		cl_program = cl::Program(cl_context, cl_source);
 		int error = cl_program.build("-cl-fast-relaxed-math -w"); // compile OpenCL C code, disable warnings
 		if(error) print_warning(cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_device)); // print build log
-		if(error) print_error("OpenCL C code compilation failed. Make sure there are no errors in kernel.cpp (\"#define LOG\" might help). If your GPU is old, try uncommenting \"#define USE_OPENCL_1_1\".");
+		if(error) print_error("OpenCL C code compilation failed.");
 		else print_info("OpenCL C code successfully compiled.");
 	}
 
@@ -215,7 +213,7 @@ int main() {
 		cl_kernel.setArg(0, device_A);
 		cl_kernel.setArg(1, device_B);
 		cl_kernel.setArg(2, device_C);
-		cl_range_local = cl::NDRange(THREAD_BLOCK_SIZE); // warp size is 32
+		cl_range_local = cl::NDRange(THREAD_BLOCK_SIZE);
 		cl_range_global = cl::NDRange(((N+THREAD_BLOCK_SIZE-1)/THREAD_BLOCK_SIZE)*THREAD_BLOCK_SIZE); // make global range a multiple of local range
 	}
 
