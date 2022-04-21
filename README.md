@@ -2,7 +2,7 @@
 OpenCL is the most powerful programming language ever created. Yet the OpenCL C++ bindings are cumbersome and the code overhead prevents many people from getting started.
 I created this lightweight OpenCL-Wrapper to greatly simplify OpenCL software development with C++ while keeping functionality and performance.
 
-Works in both Windows and Linux with C++17.
+Works in Windows, Linux and Android with C++17.
 
 ## Key simplifications:
 1. select a `Device` with 1 line

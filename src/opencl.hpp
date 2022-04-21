@@ -8,7 +8,7 @@
 #ifdef USE_OPENCL_1_1
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #endif // USE_OPENCL_1_1
-#include <CL/cl.hpp> // old version (OpenCL 1.0, 1.1, 1.2)
+#include <CL/cl.hpp> // OpenCL 1.0, 1.1, 1.2
 #include "utilities.hpp"
 
 struct Device_Info {
@@ -198,7 +198,7 @@ private:
 	cl::Buffer device_buffer; // device buffer
 	Device* device = nullptr; // pointer to linked Device
 	cl::CommandQueue cl_queue; // command queue
-	void initialize_auxiliary_pointers() {
+	inline void initialize_auxiliary_pointers() {
 		x = s0 = host_buffer;
 		if(d>0x1u) y = s1 = host_buffer+N;
 		if(d>0x2u) z = s2 = host_buffer+N*0x2ull;
@@ -216,7 +216,7 @@ private:
 		if(d>0xEu) sE = host_buffer+N*0xEull;
 		if(d>0xFu) sF = host_buffer+N*0xFull;
 	}
-	void allocate_device_buffer(Device& device, const bool allocate_device) {
+	inline void allocate_device_buffer(Device& device, const bool allocate_device) {
 		this->device = &device;
 		this->cl_queue = device.get_cl_queue();
 		if(allocate_device) {
