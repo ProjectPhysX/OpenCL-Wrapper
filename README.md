@@ -14,7 +14,7 @@ Works in Windows, Linux and Android with C++17.
      - easy option to generate PTX assembly and save that in a `.ptx` file
 2. create a `Memory` object with 1 line
    - one object for both host and device memory
-   - easy host <-> device memory transfer
+   - easy host <-> device memory transfer (also for 1D/2D/3D grid domains)
    - easy handling of multi-dimensional vectors
    - can also be used to only allocate memory on host or only allocate memory on device
    - automatically tracks total global memory usage of device when allocating/deleting memory
@@ -136,7 +136,7 @@ int main() {
 			const float intel = (float)(contains(to_lower(vendor), "intel"))*(is_gpu?8.0f:0.5f); // Intel integrated GPUs usually have 8 cores/CU, Intel CPUs (with HT) have 1/2 core/CU
 			const float arm = (float)(contains(to_lower(vendor), "arm"))*(is_gpu?8.0f:1.0f); // ARM GPUs usually have 8 cores/CU, ARM CPUs have 1 core/CU
 			const uint cores = to_uint((float)compute_units*(nvidia+amd+intel+arm)); // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
-			const float tflops = 1E-6f*(float)cores*(float)ipc*(float)clock_frequency; // estimated device floating point performance in TeraFLOPs/s
+			const float tflops = 1E-6f*(float)cores*(float)ipc*(float)clock_frequency; // estimated device FP32 floating point performance in TeraFLOPs/s
 			if(tflops>best_value) {
 				best_value = tflops;
 				best_i = i;

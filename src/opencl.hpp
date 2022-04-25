@@ -24,7 +24,7 @@ struct Device_Info {
 	bool is_cpu=false, is_gpu=false;
 	uint is_fp64_capable=0u, is_fp32_capable=0u, is_fp16_capable=0u, is_int64_capable=0u, is_int32_capable=0u, is_int16_capable=0u, is_int8_capable=0u;
 	uint cores=0u; // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
-	float tflops=0.0f; // estimated device floating point performance in TeraFLOPs/s
+	float tflops=0.0f; // estimated device FP32 floating point performance in TeraFLOPs/s
 	inline Device_Info(const cl::Device& cl_device) {
 		this->cl_device = cl_device; // see https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceInfo.html
 		name = trim(cl_device.getInfo<CL_DEVICE_NAME>()); // device name
@@ -379,6 +379,82 @@ public:
 		if(host_buffer_exists&&device_buffer_exists) {
 			const ulong safe_offset=min(offset, range()), safe_length=min(length, range()-safe_offset);
 			if(safe_length>0ull) cl_queue.enqueueWriteBuffer(device_buffer, blocking, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+		}
+	}
+	inline void read_from_device_1d(const ulong x0, const ulong x1, const int dimension=-1, const bool blocking=true) { // read 1D domain from device, either for all vector dimensions (-1) or for a specified dimension
+		if(host_buffer_exists&&device_buffer_exists) {
+			const uint i0=(uint)max(0, dimension), i1=dimension<0 ? d : i0+1u;
+			for(uint i=i0; i<i1; i++) {
+				const ulong safe_offset=min((ulong)i*N+x0, range()), safe_length=min(x1-x0, range()-safe_offset);
+				if(safe_length>0ull) cl_queue.enqueueReadBuffer(device_buffer, false, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+			}
+			if(blocking) cl_queue.finish();
+		}
+	}
+	inline void write_to_device_1d(const ulong x0, const ulong x1, const int dimension=-1, const bool blocking=true) { // write 1D domain to device, either for all vector dimensions (-1) or for a specified dimension
+		if(host_buffer_exists&&device_buffer_exists) {
+			const uint i0=(uint)max(0, dimension), i1=dimension<0 ? d : i0+1u;
+			for(uint i=i0; i<i1; i++) {
+				const ulong safe_offset=min((ulong)i*N+x0, range()), safe_length=min(x1-x0, range()-safe_offset);
+				if(safe_length>0ull) cl_queue.enqueueWriteBuffer(device_buffer, false, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+			}
+			if(blocking) cl_queue.finish();
+		}
+	}
+	inline void read_from_device_2d(const ulong x0, const ulong x1, const ulong y0, const ulong y1, const ulong Nx, const ulong Ny, const int dimension=-1, const bool blocking=true) { // read 2D domain from device, either for all vector dimensions (-1) or for a specified dimension
+		if(host_buffer_exists&&device_buffer_exists) {
+			for(uint y=y0; y<y1; y++) {
+				const ulong n = x0+y*Nx;
+				const uint i0=(uint)max(0, dimension), i1=dimension<0 ? d : i0+1u;
+				for(uint i=i0; i<i1; i++) {
+					const ulong safe_offset=min((ulong)i*N+n, range()), safe_length=min(x1-x0, range()-safe_offset);
+					if(safe_length>0ull) cl_queue.enqueueReadBuffer(device_buffer, false, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+				}
+			}
+			if(blocking) cl_queue.finish();
+		}
+	}
+	inline void write_to_device_2d(const ulong x0, const ulong x1, const ulong y0, const ulong y1, const ulong Nx, const ulong Ny, const int dimension=-1, const bool blocking=true) { // write 2D domain to device, either for all vector dimensions (-1) or for a specified dimension
+		if(host_buffer_exists&&device_buffer_exists) {
+			for(uint y=y0; y<y1; y++) {
+				const ulong n = x0+y*Nx;
+				const uint i0=(uint)max(0, dimension), i1=dimension<0 ? d : i0+1u;
+				for(uint i=i0; i<i1; i++) {
+					const ulong safe_offset=min((ulong)i*N+n, range()), safe_length=min(x1-x0, range()-safe_offset);
+					if(safe_length>0ull) cl_queue.enqueueWriteBuffer(device_buffer, false, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+				}
+			}
+			if(blocking) cl_queue.finish();
+		}
+	}
+	inline void read_from_device_3d(const ulong x0, const ulong x1, const ulong y0, const ulong y1, const ulong z0, const ulong z1, const ulong Nx, const ulong Ny, const ulong Nz, const int dimension=-1, const bool blocking=true) { // read 3D domain from device, either for all vector dimensions (-1) or for a specified dimension
+		if(host_buffer_exists&&device_buffer_exists) {
+			for(uint z=z0; z<z1; z++) {
+				for(uint y=y0; y<y1; y++) {
+					const ulong n = x0+(y+z*Ny)*Nx;
+					const uint i0=(uint)max(0, dimension), i1=dimension<0 ? d : i0+1u;
+					for(uint i=i0; i<i1; i++) {
+						const ulong safe_offset=min((ulong)i*N+n, range()), safe_length=min(x1-x0, range()-safe_offset);
+						if(safe_length>0ull) cl_queue.enqueueReadBuffer(device_buffer, false, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+					}
+				}
+			}
+			if(blocking) cl_queue.finish();
+		}
+	}
+	inline void write_to_device_3d(const ulong x0, const ulong x1, const ulong y0, const ulong y1, const ulong z0, const ulong z1, const ulong Nx, const ulong Ny, const ulong Nz, const int dimension=-1, const bool blocking=true) { // write 3D domain to device, either for all vector dimensions (-1) or for a specified dimension
+		if(host_buffer_exists&&device_buffer_exists) {
+			for(uint z=z0; z<z1; z++) {
+				for(uint y=y0; y<y1; y++) {
+					const ulong n = x0+(y+z*Ny)*Nx;
+					const uint i0=(uint)max(0, dimension), i1=dimension<0 ? d : i0+1u;
+					for(uint i=i0; i<i1; i++) {
+						const ulong safe_offset=min((ulong)i*N+n, range()), safe_length=min(x1-x0, range()-safe_offset);
+						if(safe_length>0ull) cl_queue.enqueueWriteBuffer(device_buffer, false, safe_offset*sizeof(T), safe_length*sizeof(T), (void*)(host_buffer+safe_offset));
+					}
+				}
+			}
+			if(blocking) cl_queue.finish();
 		}
 	}
 	inline void finish() {
