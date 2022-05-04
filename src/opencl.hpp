@@ -471,22 +471,28 @@ private:
 	cl::Kernel cl_kernel;
 	cl::NDRange cl_range_global, cl_range_local;
 	cl::CommandQueue cl_queue;
+	template<typename T> inline void link_parameter(const uint position, const Memory<T>& memory) {
+		cl_kernel.setArg(position, memory.get_cl_buffer());
+	}
+	template<typename T> inline void link_parameter(const uint position, const T& constant) {
+		cl_kernel.setArg(position, sizeof(T), (void*)&constant);
+	}
+	inline void link_parameters(const uint starting_position) {
+		number_of_parameters = max(number_of_parameters, starting_position);
+	}
+	template<class T, class... U> inline void link_parameters(const uint starting_position, const T& parameter, const U&... parameters) {
+		link_parameter(starting_position, parameter);
+		link_parameters(starting_position+1u, parameters...);
+	}
 	inline void initialize_ranges(const ulong N) {
 		cl_range_local = cl::NDRange(WORKGROUP_SIZE); // warp size is 32
 		cl_range_global = cl::NDRange(((N+WORKGROUP_SIZE-1)/WORKGROUP_SIZE)*WORKGROUP_SIZE); // make global range a multiple of local range
 	}
 public:
-	template<typename... T> inline Kernel(const Device& device, const ulong N, const string& name, const Memory<T>&... parameters) {
+	template<class... T> inline Kernel(const Device& device, const ulong N, const string& name, const T&... parameters) { // accepts Memory<T> objects and fundamental data type constants
 		if(!device.is_initialized()) print_error("No Device selected. Call Device constructor.");
 		cl_kernel = cl::Kernel(device.get_cl_program(), name.c_str());
-		(cl_kernel.setArg(number_of_parameters++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
-		initialize_ranges(N);
-		cl_queue = device.get_cl_queue();
-	}
-	template<typename... T> inline Kernel(const Device& device, const ulong N, const string& name, const Memory<T>*... parameters) {
-		if(!device.is_initialized()) print_error("No Device selected. Call Device constructor.");
-		cl_kernel = cl::Kernel(device.get_cl_program(), name.c_str());
-		(cl_kernel.setArg(number_of_parameters++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
+		link_parameters(number_of_parameters, parameters...); // expand variadic template to link kernel parameters
 		initialize_ranges(N);
 		cl_queue = device.get_cl_queue();
 	}
@@ -494,34 +500,12 @@ public:
 	inline uint get_number_of_parameters() const {
 		return number_of_parameters;
 	}
-	template<typename... T> inline Kernel& add_parameters(const Memory<T>&... parameters) {
-		(cl_kernel.setArg(number_of_parameters++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
+	template<class... T> inline Kernel& add_parameters(const T&... parameters) { // add parameters to the list of existing parameters
+		link_parameters(number_of_parameters, parameters...); // expand variadic template to link kernel parameters
 		return *this;
 	}
-	template<typename... T> inline Kernel& add_parameters(const Memory<T>*... parameters) {
-		(cl_kernel.setArg(number_of_parameters++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
-		return *this;
-	}
-	template<typename... T> inline Kernel& add_constants(const T... constants) {
-		(cl_kernel.setArg(number_of_parameters++, sizeof(T), (void*)&constants), ...); // expand variadic template to pass constants as kernel parameters
-		return *this;
-	}
-	template<typename... T> inline Kernel& set_parameters(const uint starting_position, const Memory<T>&... parameters) { // set parameter at specified position
-		uint position = starting_position;
-		(cl_kernel.setArg(position++, parameters.get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
-		number_of_parameters = max(number_of_parameters, position);
-		return *this;
-	}
-	template<typename... T> inline Kernel& set_parameters(const uint starting_position, const Memory<T>*... parameters) { // set parameter at specified position
-		uint position = starting_position;
-		(cl_kernel.setArg(position++, parameters->get_cl_buffer()), ...); // expand variadic template to link buffers against kernel parameters
-		number_of_parameters = max(number_of_parameters, position);
-		return *this;
-	}
-	template<typename... T> inline Kernel& set_constants(const uint starting_position, const T... constants) { // set constant at specified position
-		uint position = starting_position;
-		(cl_kernel.setArg(position++, sizeof(T), (void*)&constants), ...); // expand variadic template to pass constants as kernel parameters
-		number_of_parameters = max(number_of_parameters, position);
+	template<class... T> inline Kernel& set_parameters(const uint starting_position, const T&... parameters) { // set parameters starting at specified position
+		link_parameters(starting_position, parameters...); // expand variadic template to link kernel parameters
 		return *this;
 	}
 	inline Kernel& run(const uint t=1u) {

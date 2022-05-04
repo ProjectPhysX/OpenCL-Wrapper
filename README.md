@@ -19,11 +19,11 @@ Works in Windows, Linux and Android with C++17.
    - can also be used to only allocate memory on host or only allocate memory on device
    - automatically tracks total global memory usage of device when allocating/deleting memory
 3. create a `Kernel` with 1 line
-   - Memory objects are linked to OpenCL C kernel parameters during Kernel creation
-   - a list of Memory objects or constants can be added to Kernel parameters in one line (`add_parameters(...)`/`add_constants(...)`)
-   - Kernel parameters can be edited (`set_parameters(...)`/`set_constants(...)`)
+   - Memory objects and constants are linked to OpenCL C kernel parameters during Kernel creation
+   - a list of Memory objects and constants can be added to Kernel parameters in one line (`add_parameters(...)`)
+   - Kernel parameters can be edited (`set_parameters(...)`)
    - easy Kernel execution: `kernel.run();`
-   - Kernel function calls can be daisy chained, for example: `kernel.set_constants(3u, time).run();`
+   - Kernel function calls can be daisy chained, for example: `kernel.set_parameters(3u, time).run();`
 4. OpenCL C code is embedded into C++
    - syntax highlighting in the code editor is retained
    - notes / peculiarities of this workaround:
