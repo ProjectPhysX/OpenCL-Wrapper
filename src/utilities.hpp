@@ -495,8 +495,8 @@ inline string trim(const string& s) { // removes whitespace characters from begi
 	const int l = (int)s.length();
 	int a=0, b=l-1;
 	char c;
-	while(a<l && ((c=s.at(a))==' '||c=='\t'||c=='\n'||c=='\v'||c=='\f'||c=='\r'||c=='\0')) a++;
-	while(b>a && ((c=s.at(b))==' '||c=='\t'||c=='\n'||c=='\v'||c=='\f'||c=='\r'||c=='\0')) b--;
+	while(a<l && ((c=s[a])==' '||c=='\t'||c=='\n'||c=='\v'||c=='\f'||c=='\r'||c=='\0')) a++;
+	while(b>a && ((c=s[b])==' '||c=='\t'||c=='\n'||c=='\v'||c=='\f'||c=='\r'||c=='\0')) b--;
 	return s.substr(a, 1+b-a);
 }
 inline bool begins_with(const string& s, const string& match) {
