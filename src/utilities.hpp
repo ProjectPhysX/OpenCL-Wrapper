@@ -18,7 +18,9 @@
 #include <thread> // contains <chrono>
 #undef min
 #undef max
-using std::string, std::vector, std::thread;
+using std::string;
+using std::vector;
+using std::thread;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
