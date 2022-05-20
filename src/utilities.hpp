@@ -661,8 +661,8 @@ inline double to_double(const string& s) {
 #include <filesystem> // automatically create directory before writing file, requires C++17
 inline vector<string> find_files(const string& path, const string& extension=".*") {
 	vector<string> files;
-	if(filesystem::is_directory(path)&&filesystem::exists(path)) {
-		for(const auto& entry : filesystem::directory_iterator(path)) {
+	if(std::filesystem::is_directory(path)&&std::filesystem::exists(path)) {
+		for(const auto& entry : std::filesystem::directory_iterator(path)) {
 			if(extension==".*"||entry.path().extension().string()==extension) files.push_back(entry.path().string());
 		}
 	}
@@ -670,9 +670,11 @@ inline vector<string> find_files(const string& path, const string& extension=".*
 }
 #endif // UTILITIES_NO_CPP17
 inline void create_folder(const string& path) { // create folder if it not already exists
-	const string f = path.substr(0, path.rfind('/')); // find last slash dividing the path from the filename, cut off file name if there is any
+	const int slash_position = (int)path.rfind('/'); // find last slash dividing the path from the filename
+	if(slash_position==(int)string::npos) return; // no slash found
+	const string f = path.substr(0, slash_position); // cut off file name if there is any
 #ifndef UTILITIES_NO_CPP17
-	if(!filesystem::is_directory(f)||!filesystem::exists(f)) filesystem::create_directories(f); // create folder if it not already exists
+	if(!std::filesystem::is_directory(f)||!std::filesystem::exists(f)) std::filesystem::create_directories(f); // create folder if it not already exists
 #endif // UTILITIES_NO_CPP17
 }
 inline string create_file_extension(const string& path, const string& extension) {
