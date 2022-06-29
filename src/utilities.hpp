@@ -617,43 +617,69 @@ inline void print_warning(const string& s) { // print formatted warning message
 inline void print_info(const string& s) { // print formatted info message
 	print_message(s, "Info: ");
 }
-#endif // UTILITIES_REGEX
 
-inline void parse_sanity_check(const string& s, const string& regex, const string& type) {
-#ifdef UTILITIES_REGEX
+inline void parse_sanity_check_error(const string& s, const string& regex, const string& type) {
 	if(!equals_regex(s, regex)) print_error("\""+s+"\" cannot be parsed to "+type+".");
-#endif // UTILITIES_REGEX
 }
 inline int to_int(const string& s) {
 	const string t = trim(s);
-	parse_sanity_check(t, "[+-]?\\d+", "int");
+	parse_sanity_check_error(t, "[+-]?\\d+", "int");
 	return atoi(t.c_str());
 }
 inline uint to_uint(const string& s) {
 	const string t = trim(s);
-	parse_sanity_check(t, "\\+?\\d+", "uint");
+	parse_sanity_check_error(t, "\\+?\\d+", "uint");
 	return (uint)atoi(t.c_str());
 }
 inline slong to_slong(const string& s) {
 	const string t = trim(s);
-	parse_sanity_check(t, "[+-]?\\d+", "slong");
+	parse_sanity_check_error(t, "[+-]?\\d+", "slong");
 	return (slong)atoll(t.c_str());
 }
 inline ulong to_ulong(const string& s) {
 	const string t = trim(s);
-	parse_sanity_check(t, "\\+?\\d+", "ulong");
+	parse_sanity_check_error(t, "\\+?\\d+", "ulong");
 	return (ulong)atoll(t.c_str());
 }
 inline float to_float(const string& s) {
 	const string t = trim(s);
-	parse_sanity_check(t, "[+-]?(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)", "float");
+	parse_sanity_check_error(t, "[+-]?(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)", "float");
 	return (float)atof(t.c_str());
 }
 inline double to_double(const string& s) {
 	const string t = trim(s);
-	parse_sanity_check(t, "[+-]?(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)", "double");
+	parse_sanity_check_error(t, "[+-]?(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)", "double");
 	return atof(t.c_str());
 }
+
+inline bool parse_sanity_check(const string& s, const string& regex) {
+	return equals_regex(s, regex);
+}
+inline int to_int(const string& s, const int default_value) {
+	const string t = trim(s);
+	return parse_sanity_check(t, "[+-]?\\d+") ? atoi(t.c_str()) : default_value;
+}
+inline uint to_uint(const string& s, const uint default_value) {
+	const string t = trim(s);
+	return parse_sanity_check(t, "\\+?\\d+") ? (uint)atoi(t.c_str()) : default_value;
+}
+inline slong to_slong(const string& s, const slong default_value) {
+	const string t = trim(s);
+	return parse_sanity_check(t, "[+-]?\\d+") ? (slong)atoll(t.c_str()) : default_value;
+}
+inline ulong to_ulong(const string& s, const ulong default_value) {
+	const string t = trim(s);
+	return parse_sanity_check(t, "\\+?\\d+") ? (ulong)atoll(t.c_str()) : default_value;
+}
+inline float to_float(const string& s, const float default_value) {
+	const string t = trim(s);
+	return parse_sanity_check(t, "[+-]?(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)") ? (float)atof(t.c_str()) : default_value;
+}
+inline double to_double(const string& s, const double default_value) {
+	const string t = trim(s);
+	return parse_sanity_check(t, "[+-]?(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)") ? atof(t.c_str()) : default_value;
+}
+#endif // UTILITIES_REGEX
 
 #ifdef UTILITIES_FILE
 #include <fstream> // read/write files
