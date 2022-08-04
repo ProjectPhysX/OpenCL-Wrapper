@@ -4,6 +4,8 @@ I created this lightweight OpenCL-Wrapper to greatly simplify OpenCL software de
 
 Works in Windows, Linux and Android with C++17.
 
+Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds entirely on top of this OpenCL-Wrapper.
+
 ## Key simplifications:
 1. select a `Device` with 1 line
    - automatically select fastest device / device with most memory / device with specified ID from a list of all devices
