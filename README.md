@@ -101,7 +101,7 @@ kernel void add_kernel(global float* A, global float* B, global float* C) { // e
 #include <CL/cl.hpp>
 #include "utilities.hpp"
 
-#define THREAD_BLOCK_SIZE 64
+#define WORKGROUP_SIZE 64
 
 int main() {
 
@@ -216,8 +216,8 @@ int main() {
 		cl_kernel.setArg(0, device_A);
 		cl_kernel.setArg(1, device_B);
 		cl_kernel.setArg(2, device_C);
-		cl_range_local = cl::NDRange(THREAD_BLOCK_SIZE);
-		cl_range_global = cl::NDRange(((N+THREAD_BLOCK_SIZE-1)/THREAD_BLOCK_SIZE)*THREAD_BLOCK_SIZE); // make global range a multiple of local range
+		cl_range_local = cl::NDRange(WORKGROUP_SIZE);
+		cl_range_global = cl::NDRange(((N+WORKGROUP_SIZE-1)/WORKGROUP_SIZE)*WORKGROUP_SIZE); // make global range a multiple of local range
 	}
 
 	// 6. finally run the actual program
