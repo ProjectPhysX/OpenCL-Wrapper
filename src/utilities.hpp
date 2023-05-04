@@ -1,7 +1,7 @@
 #pragma once
 
 #define UTILITIES_REGEX
-#define UTILITIES_FILE
+//#define UTILITIES_FILE
 #define CONSOLE_WIDTH 79
 #define UTILITIES_NO_CPP17
 
@@ -378,6 +378,10 @@ inline string decimal_to_string_double(ulong x, int digits) {
 		x /= 10ull;
 	}
 	return r;
+}
+
+inline vector<string> get_main_arguments(int argc, char* argv[]) {
+	return argc>1 ? vector<string>(argv+1, argv+argc) : vector<string>();
 }
 
 inline string to_string(const string& s){
