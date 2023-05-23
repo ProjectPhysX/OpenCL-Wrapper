@@ -9,7 +9,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{0ED9A517-40B5-43E1-95F5-A78F6D72B1E5}</ProjectGuid>
-    <RootNamespace>OpenCLWrapper</RootNamespace>
+    <RootNamespace>OpenCL-Wrapper</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
