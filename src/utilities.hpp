@@ -43,18 +43,22 @@ typedef uint64_t ulong;
 #define min_float 1.401298464E-45f
 #define max_float 3.402823466E38f
 #define epsilon_float 1.192092896E-7f
+#define inf_float as_float(0x7F800000)
+#define nan_float as_float(0xFFFFFFFF)
 #define min_double 4.9406564584124654E-324
 #define max_double 1.7976931348623158E308
 #define epsilon_double 2.2204460492503131E-16
+#define inf_double as_double(0x7FF0000000000000)
+#define nan_double as_double(0xFFFFFFFFFFFFFFFF)
 
 class Clock {
 private:
 	typedef std::chrono::high_resolution_clock clock;
 	std::chrono::time_point<clock> t;
 public:
-	Clock() { start(); }
-	void start() { t = clock::now(); }
-	double stop() const { return std::chrono::duration_cast<std::chrono::duration<double>>(clock::now()-t).count(); }
+	inline Clock() { start(); }
+	inline void start() { t = clock::now(); }
+	inline double stop() const { return std::chrono::duration_cast<std::chrono::duration<double>>(clock::now()-t).count(); }
 };
 inline void sleep(const double t) {
 	if(t>0.0) std::this_thread::sleep_for(std::chrono::milliseconds((int)(1E3*t+0.5)));
@@ -387,7 +391,10 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 inline string to_string(const string& s){
 	return s;
 }
-inline string to_string(const char& c) {
+inline string to_string(char c) {
+	return string(1, c);
+}
+inline string to_string(uchar c) {
 	return string(1, c);
 }
 inline string to_string(ulong x) {
@@ -547,7 +554,7 @@ inline void reprint(const string& s="") {
 inline void wait() {
 	std::cin.get();
 }
-template<typename T> inline void println(const T x) {
+template<typename T> inline void println(const T& x) {
 	println(to_string(x));
 }
 
@@ -580,32 +587,36 @@ inline string replace_regex(const string& s, const string& from, const string& t
 inline bool is_number(const string& s) {
 	return equals_regex(s, "\\d+(u|l|ul|ll|ull)?")||equals_regex(s, "0x(\\d|[a-fA-F])+(u|l|ul|ll|ull)?")||equals_regex(s, "0b[01]+(u|l|ul|ll|ull)?")||equals_regex(s, "(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)");
 }
-inline void print_message(const string& message, const string& keyword="") { // print formatted message
-	const uint k=length(keyword), w=CONSOLE_WIDTH-4u-k;
-	uint l = 0u;
-	string p="\r| "+keyword, f=" ";
+inline void print_message(const string& message, const string& keyword="", const int colons=true) { // print formatted message
+	const uint k=length(keyword)+2u, w=CONSOLE_WIDTH-4u-k;
+	string p=colons?": ":"  ", f="";
 	for(uint j=0u; j<k; j++) f += " ";
 	vector<string> v = split_regex(message, "[\\s\\0]+");
+	uint l = 0u; // length of current line of words
 	for(uint i=0u; i<(uint)v.size(); i++) {
 		const string word = v.at(i);
 		const uint wordlength = length(word);
-		l += wordlength+1u;
-		if(l<=w+1u||wordlength>w) {
+		l += wordlength+1u; // word + space
+		if(l<=w) { // word fits -> append word and space
 			p += word+" ";
-		} else {
-			l = l-length(v.at(i--))-1u;
-			for(uint j=l; j<=w; j++) p += " ";
-			p += "|\n|"+f;
-			l = 0u;
+		} else if(wordlength>w) { // word overflows -> split word into next line
+			p += substring(word, 0, w-(l-wordlength-1u))+" |\n| "+f;
+			v[i] = substring(v[i], w-(l-wordlength-1u)); i--; // reuse same vector element for overflowing part, decrement i to start next line with this overflowing part
+			l = 0u; // reset line length
+		} else { // word does not fit -> fill remaining line with spaces
+			l = l-length(v.at(i--))-1u; // remove word from line, decrement i to start next line with this word
+			for(uint j=l; j<w; j++) p += " ";
+			p += " |\n| "+f;
+			l = 0u; // reset line length
 		}
 	}
-	for(uint j=l; j<=w; j++) p += " ";
-	println(p+"|");
+	for(uint j=l; j<w; j++) p += " ";
+	println("\r| "+keyword+p+" |");
 }
 inline void print_error(const string& s) { // print formatted error message
-	print_message(s, "Error: ");
+	print_message(s, "Error");
 #ifdef _WIN32
-	print_message("Press Enter to exit.", "       ");
+	print_message("Press Enter to exit.", "     ", false);
 #endif // _WIN32
 	string b = "";
 	for(int i=0; i<CONSOLE_WIDTH-2; i++) b += "-";
@@ -616,10 +627,10 @@ inline void print_error(const string& s) { // print formatted error message
 	exit(1);
 }
 inline void print_warning(const string& s) { // print formatted warning message
-	print_message(s, "Warning: ");
+	print_message(s, "Warning");
 }
 inline void print_info(const string& s) { // print formatted info message
-	print_message(s, "Info: ");
+	print_message(s, "Info");
 }
 
 inline void parse_sanity_check_error(const string& s, const string& regex, const string& type) {
@@ -683,6 +694,24 @@ inline double to_double(const string& s, const double default_value) {
 	const string t = trim(s);
 	return parse_sanity_check(t, "[+-]?(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)") ? atof(t.c_str()) : default_value;
 }
+#else // UTILITIES_REGEX
+inline void print_message(const string& message, const string& keyword="", const int colons=true) { // print message
+	println(keyword+": "+message);
+}
+inline void print_error(const string& s) { // print error message
+	println("Error: "+s);
+#ifdef _WIN32
+	println("       Press Enter to exit.");
+	wait();
+#endif //_WIN32
+	exit(1);
+}
+inline void print_warning(const string& s) { // print warning message
+	println("Warning: "+s);
+}
+inline void print_info(const string& s) { // print info message
+	println("Info: "+s);
+}
 #endif // UTILITIES_REGEX
 
 #ifdef UTILITIES_FILE
@@ -707,19 +736,19 @@ inline void create_folder(const string& path) { // create folder if it not alrea
 	if(!std::filesystem::is_directory(f)||!std::filesystem::exists(f)) std::filesystem::create_directories(f); // create folder if it not already exists
 #endif // UTILITIES_NO_CPP17
 }
-inline string create_file_extension(const string& path, const string& extension) {
-	return path.substr(0, path.rfind('.'))+(extension.at(0)!='.'?".":"")+extension; // remove existing file extension if existing and replace it with new one
+inline string create_file_extension(const string& filename, const string& extension) {
+	return filename.substr(0, filename.rfind('.'))+(extension.at(0)!='.'?".":"")+extension; // remove existing file extension if existing and replace it with new one
 }
-inline string read_file(const string& path) {
-	std::ifstream file(path, std::ios::in);
-	if(file.fail()) println("\rError: File \""+path+"\" does not exist!");
+inline string read_file(const string& filename) {
+	std::ifstream file(filename, std::ios::in);
+	if(file.fail()) print_error("File \""+filename+"\" does not exist!");
 	const string r((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	file.close();
 	return r;
 }
-inline void write_file(const string& path, const string& content="") {
-	create_folder(path);
-	std::ofstream file(path, std::ios::out);
+inline void write_file(const string& filename, const string& content="") {
+	create_folder(filename);
+	std::ofstream file(filename, std::ios::out);
 	file.write(content.c_str(), content.length());
 	file.close();
 }
