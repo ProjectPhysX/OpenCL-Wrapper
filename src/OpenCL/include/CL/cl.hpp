@@ -5331,8 +5331,8 @@ public:
 
 #if defined(CL_VERSION_1_2)
 inline Program linkProgram(
-    Program input1,
-    Program input2,
+    const Program& input1,
+    const Program& input2,
     const char* options = NULL,
     void (CL_CALLBACK * notifyFptr)(cl_program, void *) = NULL,
     void* data = NULL,
@@ -5367,7 +5367,7 @@ inline Program linkProgram(
 }
 
 inline Program linkProgram(
-    VECTOR_CLASS<Program> inputPrograms,
+    const VECTOR_CLASS<Program>& inputPrograms,
     const char* options = NULL,
     void (CL_CALLBACK * notifyFptr)(cl_program, void *) = NULL,
     void* data = NULL,
@@ -12792,7 +12792,7 @@ public:
     {}
 
     make_kernel(
-        const Kernel kernel) :
+        const Kernel& kernel) :
            detail::functionImplementation_<
                     T0,   T1,   T2,   T3,
                        T4,   T5,   T6,   T7,
