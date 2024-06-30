@@ -105,10 +105,10 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
 
 </details>
 
-- [Download](https://github.com/ProjectPhysX/OpenCL-Wrapper/archive/refs/heads/master.zip) and unzip the source code, or clone with:
-  ```bash
-  git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrapper
-  ```
+&#9658; [Download](https://github.com/ProjectPhysX/OpenCL-Wrapper/archive/refs/heads/master.zip) and unzip the source code, or clone with:
+```bash
+git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrapper
+```
 
 ## Key simplifications:
 1. select a `Device` with 1 line
