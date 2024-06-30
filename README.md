@@ -6,6 +6,109 @@ Works in Windows, Linux and Android with C++17.
 
 Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds entirely on top of this OpenCL-Wrapper.
 
+## Getting started:
+<details><summary>Intstall GPU Drivers and OpenCL Runtime (click to expand section)</summary>
+
+- **Windows**
+  <details><summary>GPUs</summary>
+
+  - Download and install the [AMD](https://www.amd.com/en/support/download/drivers.html)/[Intel](https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html)/[Nvidia](https://www.nvidia.com/Download/index.aspx) GPU Drivers, which contain the OpenCL Runtime.
+  - Reboot.
+
+  </details>
+  <details><summary>CPUs</summary>
+
+  - Download and install the [Intel CPU Runtime for OpenCL](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-cpu-runtime-for-opencl-applications-with-sycl-support.html) (works for both AMD/Intel CPUs).
+  - Reboot.
+
+  </details>
+- **Linux**
+  <details><summary>AMD GPUs</summary>
+
+  - Download and install [AMD GPU Drivers](https://www.amd.com/en/support/linux-drivers), which contain the OpenCL Runtime, with:
+    ```bash
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev
+    mkdir -p ~/amdgpu
+    wget -P ~/amdgpu https://repo.radeon.com/amdgpu-install/6.1.3/ubuntu/jammy/amdgpu-install_6.1.60103-1_all.deb
+    sudo apt install -y ~/amdgpu/amdgpu-install*.deb
+    sudo amdgpu-install -y --usecase=graphics,rocm,opencl --opencl=rocr
+    sudo usermod -a -G render,video $(whoami)
+    rm -r ~/amdgpu
+    sudo shutdown -r now
+    ```
+
+  </details>
+  <details><summary>Intel GPUs</summary>
+
+  - Intel GPU Drivers come already installed since Linux Kernel 6.2, but they don't contain the OpenCL Runtime.
+  - The the [OpenCL Runtime](https://github.com/intel/compute-runtime/releases) has to be installed separately with:
+    ```bash
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev intel-opencl-icd
+    sudo usermod -a -G render $(whoami)
+    sudo shutdown -r now
+    ```
+
+  </details>
+  <details><summary>Nvidia GPUs</summary>
+
+  - Download and install [Nvidia GPU Drivers](https://www.nvidia.com/Download/index.aspx), which contain the OpenCL Runtime, with:
+    ```bash
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev nvidia-driver-550
+    sudo shutdown -r now
+    ```
+
+  </details>
+  <details><summary>CPUs</summary>
+
+  - Option 1: Download and install the [oneAPI DPC++ Compiler](https://github.com/intel/llvm/releases?q=oneAPI+DPC%2B%2B+Compiler) and [oneTBB](https://github.com/oneapi-src/oneTBB/releases) with:
+    ```bash
+    export OCLCPUEXP_VERSION="2024.18.6.0.02_rel"
+    export ONEAPI_TBB_VERSION="2021.13.0"
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev
+    sudo mkdir -p ~/cpuruntime /opt/intel/oclcpuexp_${OCLCPUEXP_VERSION} /etc/OpenCL/vendors /etc/ld.so.conf.d
+    sudo wget -P ~/cpuruntime https://github.com/intel/llvm/releases/download/2024-WW25/oclcpuexp-${OCLCPUEXP_VERSION}.tar.gz
+    sudo wget -P ~/cpuruntime https://github.com/oneapi-src/oneTBB/releases/download/v${ONEAPI_TBB_VERSION}/oneapi-tbb-${ONEAPI_TBB_VERSION}-lin.tgz
+    sudo tar -zxvf ~/cpuruntime/oclcpuexp-${OCLCPUEXP_VERSION}.tar.gz -C /opt/intel/oclcpuexp_${OCLCPUEXP_VERSION}
+    sudo tar -zxvf ~/cpuruntime/oneapi-tbb-${ONEAPI_TBB_VERSION}-lin.tgz -C /opt/intel
+    echo /opt/intel/oclcpuexp_${OCLCPUEXP_VERSION}/x64/libintelocl.so | sudo tee /etc/OpenCL/vendors/intel_expcpu.icd
+    echo /opt/intel/oclcpuexp_${OCLCPUEXP_VERSION}/x64 | sudo tee /etc/ld.so.conf.d/libintelopenclexp.conf
+    sudo ln -sf /opt/intel/oneapi-tbb-${ONEAPI_TBB_VERSION}/lib/intel64/gcc4.8/libtbb.so /opt/intel/oclcpuexp_${OCLCPUEXP_VERSION}/x64
+    sudo ln -sf /opt/intel/oneapi-tbb-${ONEAPI_TBB_VERSION}/lib/intel64/gcc4.8/libtbbmalloc.so /opt/intel/oclcpuexp_${OCLCPUEXP_VERSION}/x64
+    sudo ln -sf /opt/intel/oneapi-tbb-${ONEAPI_TBB_VERSION}/lib/intel64/gcc4.8/libtbb.so.12 /opt/intel/oclcpuexp_${OCLCPUEXP_VERSION}/x64
+    sudo ln -sf /opt/intel/oneapi-tbb-${ONEAPI_TBB_VERSION}/lib/intel64/gcc4.8/libtbbmalloc.so.2 /opt/intel/oclcpuexp_${OCLCPUEXP_VERSION}/x64
+    sudo ldconfig -f /etc/ld.so.conf.d/libintelopenclexp.conf
+    sudo rm -r ~/cpuruntime
+    ```
+  - Option 2: Download and install [PoCL](https://portablecl.org/) with:
+    ```bash
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev pocl-opencl-icd
+    ```
+  </details>
+
+- **Android**
+  <details><summary>ARM GPUs</summary>
+
+  - Download the [Termux `.apk`](https://github.com/termux/termux-app/releases) and install it.
+  - In the Termux app, run:
+    ```bash
+    apt update
+    apt upgrade -y
+    apt install -y clang git make
+    ```
+
+  </details>
+
+</details>
+- [Download](https://github.com/ProjectPhysX/OpenCL-Wrapper/archive/refs/heads/master.zip) and unzip the source code, or clone with:
+  ```bash
+  git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrapper
+  ```
+
 ## Key simplifications:
 1. select a `Device` with 1 line
    - automatically select fastest device / device with most memory / device with specified ID from a list of all devices
