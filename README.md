@@ -109,6 +109,22 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
 ```bash
 git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrapper
 ```
+&#9656;Compiling on Windows
+- Download and install [Visual Studio Community](https://visualstudio.microsoft.com/de/vs/community/). In Visual Studio Installer, add:
+  - Desktop development with C++
+  - MSVC v142
+  - Windows 10 SDK
+- Open [`OpenCL-Wrapper.sln`](OpenCL-Wrapper.sln) in [Visual Studio Community](https://visualstudio.microsoft.com/de/vs/community/).
+- Compile and run by clicking the <kbd>► Local Windows Debugger</kbd> button.
+
+&#9656;Compiling on Linux / macOS / Android
+- Compile and run with:
+  ```bash
+  chmod +x make.sh
+  ./make.sh
+  ```
+- Compiling requires [`g++`](https://gcc.gnu.org/) with `C++17`, which is supported since version `8` (check with `g++ --version`).
+- Operating system (Linux/macOS/Android) is detected automatically. In case problems arise, you can still manually select [`target=...`](make.sh#L10) in [`make.sh`](make.sh#L10).
 
 ## Key simplifications:
 1. select a `Device` with 1 line
@@ -117,7 +133,8 @@ git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrappe
    - automatic OpenCL C code compilation when creating the Device object
      - automatically enable FP64/FP16 capabilities in OpenCL C code
      - automatically print log to console if there are compile errors
-     - easy option to generate PTX assembly and save that in a `.ptx` file
+     - easy option to generate PTX assembly for Nvidia GPUs and save that in a `.ptx` file
+   - contains all device-specific workarounds/patches to make OpenCL fully cross-compatible
 2. create a `Memory` object with 1 line
    - one object for both host and device memory
    - easy host <-> device memory transfer (also for 1D/2D/3D grid domains)
@@ -130,6 +147,7 @@ git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrappe
    - Kernel parameters can be edited (`set_parameters(...)`)
    - easy Kernel execution: `kernel.run();`
    - Kernel function calls can be daisy chained, for example: `kernel.set_parameters(3u, time).run();`
+   - failsafe: you'll get an error message if kernel parameters mismatch between C++ and OpenCL code
 4. OpenCL C code is embedded into C++
    - syntax highlighting in the code editor is retained
    - notes / peculiarities of this workaround:
@@ -147,6 +165,7 @@ git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrappe
 - keep track of global/local range for kernels
 - bother with Queue, Context, Source, Program
 - load a `.cl` file at runtime
+- bother with device-specific workarounds/patches
 
 ## Example (OpenCL vector addition)
 ### main.cpp
