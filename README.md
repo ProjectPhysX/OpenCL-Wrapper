@@ -125,7 +125,7 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
   ./make.sh
   ```
 - Compiling requires [`g++`](https://gcc.gnu.org/) with `C++17`, which is supported since version `8` (check with `g++ --version`).
-- Operating system (Linux/macOS/Android) is detected automatically. In case problems arise, you can still manually select [`target=...`](make.sh#L10) in [`make.sh`](make.sh#L10).
+- Operating system (Linux/macOS/Android) is detected automatically.
 
 </details>
 
