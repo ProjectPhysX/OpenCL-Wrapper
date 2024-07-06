@@ -36,7 +36,7 @@ sudo usermod -a -G render,video $(whoami)
 rm -r ~/amdgpu
 sudo shutdown -r now
 
-)"+string("\033[94m")+R"(.-----------------------------------------------------------------------------.
+)"+string("\033[36m")+R"(.-----------------------------------------------------------------------------.
 | Intel GPU Drivers are already installed, only the OpenCL Runtime is needed  |
 '-----------------------------------------------------------------------------'
 sudo apt update && sudo apt upgrade -y
