@@ -105,7 +105,7 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
 
 </details>
 
-&#9656;[Download](https://github.com/ProjectPhysX/OpenCL-Wrapper/archive/refs/heads/master.zip) and unzip the source code, or clone with `git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git`
+&#9656;[Download](https://github.com/ProjectPhysX/OpenCL-Wrapper/archive/refs/heads/master.zip)+unzip the source code or `git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git`
 
 <details><summary>Compiling on Windows (click to expand section)</summary>
 
