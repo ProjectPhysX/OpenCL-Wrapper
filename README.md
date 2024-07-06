@@ -105,11 +105,10 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
 
 </details>
 
-&#9656;[Download](https://github.com/ProjectPhysX/OpenCL-Wrapper/archive/refs/heads/master.zip) and unzip the source code, or clone with:
-```bash
-git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrapper
-```
-&#9656;Compiling on Windows
+&#9656;[Download](https://github.com/ProjectPhysX/OpenCL-Wrapper/archive/refs/heads/master.zip) and unzip the source code, or clone with `git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git`
+
+<details><summary>Compiling on Windows (click to expand section)</summary>
+
 - Download and install [Visual Studio Community](https://visualstudio.microsoft.com/de/vs/community/). In Visual Studio Installer, add:
   - Desktop development with C++
   - MSVC v142
@@ -117,7 +116,9 @@ git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrappe
 - Open [`OpenCL-Wrapper.sln`](OpenCL-Wrapper.sln) in [Visual Studio Community](https://visualstudio.microsoft.com/de/vs/community/).
 - Compile and run by clicking the <kbd>► Local Windows Debugger</kbd> button.
 
-&#9656;Compiling on Linux / macOS / Android
+</details>
+<details><summary>Compiling on Linux / macOS / Android (click to expand section)</summary>
+
 - Compile and run with:
   ```bash
   chmod +x make.sh
@@ -125,6 +126,8 @@ git clone https://github.com/ProjectPhysX/OpenCL-Wrapper.git && cd OpenCL-Wrappe
   ```
 - Compiling requires [`g++`](https://gcc.gnu.org/) with `C++17`, which is supported since version `8` (check with `g++ --version`).
 - Operating system (Linux/macOS/Android) is detected automatically. In case problems arise, you can still manually select [`target=...`](make.sh#L10) in [`make.sh`](make.sh#L10).
+
+</details>
 
 ## Key simplifications:
 1. select a `Device` with 1 line
