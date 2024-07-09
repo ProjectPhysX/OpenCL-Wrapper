@@ -99,9 +99,10 @@ struct Device_Info {
 	uint is_fp64_capable=0u, is_fp32_capable=0u, is_fp16_capable=0u, is_int64_capable=0u, is_int32_capable=0u, is_int16_capable=0u, is_int8_capable=0u;
 	uint cores=0u; // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
 	float tflops=0.0f; // estimated device FP32 floating point performance in TeraFLOPs/s
-	inline Device_Info(const cl::Device& cl_device, const cl::Context& cl_context, const uint id) {
-		this->cl_device = cl_device; // see https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceInfo.html
-		this->cl_context = cl_context;
+	inline Device_Info(const cl::Device& cl_device, const cl::Context& cl_context, const uint id)
+		: cl_device(cl_device), // see https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceInfo.html
+		  cl_context(cl_context)
+	{
 		this->id = id;
 		name = trim(cl_device.getInfo<CL_DEVICE_NAME>()); // device name
 		vendor = trim(cl_device.getInfo<CL_DEVICE_VENDOR>()); // device vendor
@@ -150,7 +151,7 @@ struct Device_Info {
 		intel_gpu_above_4gb_patch = intel_gpu_above_4gb_patch||((intel==8.0f)&&(memory>4096)); // enable memory allocations greater than 4GB for Intel GPUs with >4GB VRAM
 		legacy_gpu_fma_patch = legacy_gpu_fma_patch||contains(to_lower(vendor), "arm"); // enable for all ARM GPUs
 	}
-	inline Device_Info() {}; // default constructor
+	inline Device_Info() = default; // default constructor
 };
 
 string get_opencl_c_code(); // implemented in kernel.hpp
@@ -186,7 +187,7 @@ inline vector<Device_Info> get_devices(const bool print_info=true) { // returns 
 		//cl::Context cl_context(cl_devices); // same cl::Context for all devices (allocates extra VRAM on all other unused Nvidia GPUs)
 		for(uint j=0u; j<(uint)cl_devices.size(); j++) {
 			cl::Context cl_context(cl_devices[j]); // separate cl::Context for each device
-			devices.push_back(Device_Info(cl_devices[j], cl_context, id++));
+			devices.emplace_back(cl_devices[j], cl_context, id++);
 		}
 	}
 	if((uint)cl_platforms.size()==0u||(uint)devices.size()==0u) {
@@ -255,9 +256,8 @@ private:
 	;}
 public:
 	Device_Info info;
-	inline Device(const Device_Info& info, const string& opencl_c_code=get_opencl_c_code()) {
-		print_device_info(info);
-		this->info = info;
+	inline Device(const Device_Info& info, const string& opencl_c_code=get_opencl_c_code()) : info(info) {
+		print_device_info(this->info);
 		this->cl_queue = cl::CommandQueue(info.cl_context, info.cl_device); // queue to push commands for the device
 		cl::Program::Sources cl_source;
 		const string kernel_code = enable_device_capabilities()+"\n"+opencl_c_code;
@@ -280,7 +280,7 @@ public:
 #endif // PTX
 		this->exists = true;
 	}
-	inline Device() {} // default constructor
+	inline Device() = default; // default constructor
 	inline void barrier(const vector<Event>* event_waitlist=nullptr, Event* event_returned=nullptr) { cl_queue.enqueueBarrierWithWaitList(event_waitlist, event_returned); }
 	inline void finish_queue() { cl_queue.finish(); }
 	inline cl::Context get_cl_context() const { return info.cl_context; }
@@ -347,7 +347,7 @@ public:
 		external_host_buffer = true;
 		write_to_device();
 	}
-	inline Memory() {} // default constructor
+	inline Memory() = default; // default constructor
 	inline ~Memory() {
 		delete_buffers();
 	}
