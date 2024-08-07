@@ -7,7 +7,7 @@ Works in Windows, Linux and Android with C++17.
 Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds entirely on top of this OpenCL-Wrapper.
 
 ## Getting started:
-<details><summary>Intstall GPU Drivers and OpenCL Runtime (click to expand section)</summary>
+<details><summary>Install GPU Drivers and OpenCL Runtime (click to expand section)</summary>
 
 - **Windows**
   <details><summary>GPUs</summary>
