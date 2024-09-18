@@ -96,8 +96,7 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
   - Download the [Termux `.apk`](https://github.com/termux/termux-app/releases) and install it.
   - In the Termux app, run:
     ```bash
-    apt update
-    apt upgrade -y
+    apt update && apt upgrade -y
     apt install -y clang git make
     ```
 
