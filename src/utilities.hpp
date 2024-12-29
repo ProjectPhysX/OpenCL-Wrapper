@@ -565,7 +565,7 @@ inline vector<string> split_regex(const string& s, const string& separator="\\s+
 	std::sregex_token_iterator token(s.begin(), s.end()+1, rgx, -1), end;
 	while(token!=end) {
 		r.push_back(*token);
-		token++;
+		++token;
 	}
 	return r;
 }
