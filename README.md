@@ -30,7 +30,7 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
     sudo apt update && sudo apt upgrade -y
     sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev
     mkdir -p ~/amdgpu
-    wget -P ~/amdgpu https://repo.radeon.com/amdgpu-install/6.2.3/ubuntu/noble/amdgpu-install_6.2.60203-1_all.deb
+    wget -P ~/amdgpu https://repo.radeon.com/amdgpu-install/6.3.2/ubuntu/noble/amdgpu-install_6.3.60302-1_all.deb
     sudo apt install -y ~/amdgpu/amdgpu-install*.deb
     sudo amdgpu-install -y --usecase=graphics,rocm,opencl --opencl=rocr
     sudo usermod -a -G render,video $(whoami)
@@ -56,7 +56,7 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
   - Download and install [Nvidia GPU Drivers](https://www.nvidia.com/Download/index.aspx), which contain the OpenCL Runtime, with:
     ```bash
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev nvidia-driver-550
+    sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev nvidia-driver-560
     sudo shutdown -r now
     ```
 
@@ -65,21 +65,21 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
 
   - Option 1: Download and install the [oneAPI DPC++ Compiler](https://github.com/intel/llvm/releases?q=oneAPI+DPC%2B%2B+Compiler) and [oneTBB](https://github.com/oneapi-src/oneTBB/releases) with:
     ```bash
-    export OCLV="2024.18.10.0.08_rel"
-    export TBBV="2022.0.0"
+    export OCLV="oclcpuexp-2024.18.10.0.08_rel"
+    export TBBV="oneapi-tbb-2022.0.0"
     sudo apt update && sudo apt upgrade -y
     sudo apt install -y g++ git make ocl-icd-libopencl1 ocl-icd-opencl-dev
-    sudo mkdir -p ~/cpurt /opt/intel/oclcpuexp_${OCLV} /etc/OpenCL/vendors /etc/ld.so.conf.d
-    sudo wget -P ~/cpurt https://github.com/intel/llvm/releases/download/2024-WW43/oclcpuexp-${OCLV}.tar.gz
-    sudo wget -P ~/cpurt https://github.com/oneapi-src/oneTBB/releases/download/v${TBBV}/oneapi-tbb-${TBBV}-lin.tgz
-    sudo tar -zxvf ~/cpurt/oclcpuexp-${OCLV}.tar.gz -C /opt/intel/oclcpuexp_${OCLV}
-    sudo tar -zxvf ~/cpurt/oneapi-tbb-${TBBV}-lin.tgz -C /opt/intel
-    echo /opt/intel/oclcpuexp_${OCLV}/x64/libintelocl.so | sudo tee /etc/OpenCL/vendors/intel_expcpu.icd
-    echo /opt/intel/oclcpuexp_${OCLV}/x64 | sudo tee /etc/ld.so.conf.d/libintelopenclexp.conf
-    sudo ln -sf /opt/intel/oneapi-tbb-${TBBV}/lib/intel64/gcc4.8/libtbb.so /opt/intel/oclcpuexp_${OCLV}/x64
-    sudo ln -sf /opt/intel/oneapi-tbb-${TBBV}/lib/intel64/gcc4.8/libtbbmalloc.so /opt/intel/oclcpuexp_${OCLV}/x64
-    sudo ln -sf /opt/intel/oneapi-tbb-${TBBV}/lib/intel64/gcc4.8/libtbb.so.12 /opt/intel/oclcpuexp_${OCLV}/x64
-    sudo ln -sf /opt/intel/oneapi-tbb-${TBBV}/lib/intel64/gcc4.8/libtbbmalloc.so.2 /opt/intel/oclcpuexp_${OCLV}/x64
+    sudo mkdir -p ~/cpurt /opt/intel/${OCLV} /etc/OpenCL/vendors /etc/ld.so.conf.d
+    sudo wget -P ~/cpurt https://github.com/intel/llvm/releases/download/2024-WW43/${OCLV}.tar.gz
+    sudo wget -P ~/cpurt https://github.com/oneapi-src/oneTBB/releases/download/v2022.0.0/${TBBV}-lin.tgz
+    sudo tar -zxvf ~/cpurt/${OCLV}.tar.gz -C /opt/intel/${OCLV}
+    sudo tar -zxvf ~/cpurt/${TBBV}-lin.tgz -C /opt/intel
+    echo /opt/intel/${OCLV}/x64/libintelocl.so | sudo tee /etc/OpenCL/vendors/intel_expcpu.icd
+    echo /opt/intel/${OCLV}/x64 | sudo tee /etc/ld.so.conf.d/libintelopenclexp.conf
+    sudo ln -sf /opt/intel/${TBBV}/lib/intel64/gcc4.8/libtbb.so /opt/intel/${OCLV}/x64
+    sudo ln -sf /opt/intel/${TBBV}/lib/intel64/gcc4.8/libtbbmalloc.so /opt/intel/${OCLV}/x64
+    sudo ln -sf /opt/intel/${TBBV}/lib/intel64/gcc4.8/libtbb.so.12 /opt/intel/${OCLV}/x64
+    sudo ln -sf /opt/intel/${TBBV}/lib/intel64/gcc4.8/libtbbmalloc.so.2 /opt/intel/${OCLV}/x64
     sudo ldconfig -f /etc/ld.so.conf.d/libintelopenclexp.conf
     sudo rm -r ~/cpurt
     ```
@@ -140,6 +140,7 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
      - enable basic FP16 support on Nvidia Pascal and newer GPUs with driver 520 or newer
      - enable >4GB single buffer VRAM allocations on Intel Arc GPUs
      - fix for wrong VRAM capacity reporting on Intel Arc GPUs
+     - fix for wrong device name reporting on AMD GPUs
      - fix for maximum buffer allocation size limit for AMD GPUs
      - fix for maximum buffer allocation size limit in Intel CPU Runtime for OpenCL
      - fix for terrible `fma` performance on ARM GPUs
@@ -230,7 +231,9 @@ kernel void add_kernel(global float* A, global float* B, global float* C) { // e
 
 ### For comparison, the very same OpenCL vector addition example looks like this when directly using the OpenCL C++ bindings:
 ```c
-#include <CL/cl.hpp>
+#define CL_HPP_MINIMUM_OPENCL_VERSION 100
+#define CL_HPP_TARGET_OPENCL_VERSION 300
+#include <CL/opencl.hpp>
 #include "utilities.hpp"
 
 #define WORKGROUP_SIZE 64
@@ -256,24 +259,36 @@ int main() {
 		float best_value = 0.0f;
 		uint best_i = 0u; // index of fastest device
 		for(uint i=0u; i<(uint)cl_devices.size(); i++) { // find device with highest (estimated) floating point performance
-			const string name = trim(cl_devices[i].getInfo<CL_DEVICE_NAME>()); // device name
-			const string vendor = trim(cl_devices[i].getInfo<CL_DEVICE_VENDOR>()); // device vendor
-			const uint compute_units = (uint)cl_devices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(); // compute units (CUs) can contain multiple cores depending on the microarchitecture
-			const uint clock_frequency = (uint)cl_devices[i].getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>(); // in MHz
-			const bool is_gpu = cl_devices[i].getInfo<CL_DEVICE_TYPE>()==CL_DEVICE_TYPE_GPU;
-			const uint ipc = is_gpu?2u:32u; // IPC (instructions per cycle) is 2 for GPUs and 32 for most modern CPUs
-			const bool nvidia_192_cores_per_cu = contains_any(to_lower(name), {"gt 6", "gt 7", "gtx 6", "gtx 7", "quadro k", "tesla k"}) || (clock_frequency<1000u&&contains(to_lower(name), "titan")); // identify Kepler GPUs
-			const bool nvidia_64_cores_per_cu = contains_any(to_lower(name), {"p100", "v100", "a100", "a30", " 16", " 20", "titan v", "titan rtx", "quadro t", "tesla t", "quadro rtx"}) && !contains(to_lower(name), "rtx a"); // identify P100, Volta, Turing, A100, A30
-			const bool amd_128_cores_per_dualcu = contains(to_lower(name), "gfx10"); // identify RDNA/RDNA2 GPUs where dual CUs are reported
-			const bool amd_256_cores_per_dualcu = contains(to_lower(name), "gfx11"); // identify RDNA3 GPUs where dual CUs are reported
-			const bool intel_16_cores_per_cu = contains(to_lower(name), "gpu max"); // identify PVC GPUs
-			const float nvidia = (float)(contains(to_lower(vendor), "nvidia"))*(nvidia_64_cores_per_cu?64.0f:nvidia_192_cores_per_cu?192.0f:128.0f); // Nvidia GPUs have 192 cores/CU (Kepler), 128 cores/CU (Maxwell, Pascal, Ampere, Hopper, Ada) or 64 cores/CU (P100, Volta, Turing, A100, A30)
-			const float amd = (float)(contains_any(to_lower(vendor), {"amd", "advanced"}))*(is_gpu?(amd_256_cores_per_dualcu?256.0f:amd_128_cores_per_dualcu?128.0f:64.0f):0.5f); // AMD GPUs have 64 cores/CU (GCN, CDNA), 128 cores/dualCU (RDNA, RDNA2) or 256 cores/dualCU (RDNA3), AMD CPUs (with SMT) have 1/2 core/CU
-			const float intel = (float)(contains(to_lower(vendor), "intel"))*(is_gpu?(intel_16_cores_per_cu?16.0f:8.0f):0.5f); // Intel GPUs have 16 cores/CU (PVC) or 8 cores/CU (integrated/Arc), Intel CPUs (with HT) have 1/2 core/CU
-			const float apple = (float)(contains(to_lower(vendor), "apple"))*(128.0f); // Apple ARM GPUs usually have 128 cores/CU
-			const float arm = (float)(contains(to_lower(vendor), "arm"))*(is_gpu?8.0f:1.0f); // ARM GPUs usually have 8 cores/CU, ARM CPUs have 1 core/CU
-			cores = to_uint((float)compute_units*(nvidia+amd+intel+apple+arm)); // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
-			tflops = 1E-6f*(float)cores*(float)ipc*(float)clock_frequency; // estimated device floating point performance in TeraFLOPs/s
+			const string name = trim(cl_device.getInfo<CL_DEVICE_NAME>()); // device name
+			const string vendor = trim(cl_device.getInfo<CL_DEVICE_VENDOR>()); // device vendor
+			const uint compute_units = (uint)cl_device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(); // compute units (CUs) can contain multiple cores depending on the microarchitecture
+			const uint clock_frequency = (uint)cl_device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>(); // in MHz
+			const bool is_gpu = cl_device.getInfo<CL_DEVICE_TYPE>()==CL_DEVICE_TYPE_GPU;
+			const int vendor_id = (int)cl_device.getInfo<CL_DEVICE_VENDOR_ID>(); // AMD=0x1002, Intel=0x8086, Nvidia=0x10DE, Apple=0x1027F00
+			float cores_per_cu = 1.0f;
+			if(vendor_id==0x1002) { // AMD GPU/CPU
+				const bool amd_128_cores_per_dualcu = contains(to_lower(name), "gfx10"); // identify RDNA/RDNA2 GPUs where dual CUs are reported
+				const bool amd_256_cores_per_dualcu = contains(to_lower(name), "gfx11"); // identify RDNA3 GPUs where dual CUs are reported
+				cores_per_cu = is_gpu ? (amd_256_cores_per_dualcu ? 256.0f : amd_128_cores_per_dualcu ? 128.0f : 64.0f) : 0.5f; // 64 cores/CU (GCN, CDNA), 128 cores/dualCU (RDNA, RDNA2), 256 cores/dualCU (RDNA3), 1/2 core/CU (CPUs)
+			} else if(vendor_id==0x8086) { // Intel GPU/CPU
+				const bool intel_16_cores_per_cu = contains_any(to_lower(name), {"gpu max", "140v", "130v", "b580", "b570"}); // identify PVC/Xe2 GPUs
+				cores_per_cu = is_gpu ? (intel_16_cores_per_cu ? 16.0f : 8.0f) : 0.5f; // Intel GPUs have 16 cores/CU (PVC) or 8 cores/CU (integrated/Arc), Intel CPUs (with HT) have 1/2 core/CU
+			} else if(vendor_id==0x10DE||vendor_id==0x13B5) { // Nvidia GPU/CPU
+				const uint nvidia_compute_capability = 10u*(uint)cl_device.getInfo<CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV>()+(uint)cl_device.getInfo<CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV>();
+				const bool nvidia__32_cores_per_cu = (nvidia_compute_capability <30); // identify Fermi GPUs
+				const bool nvidia_192_cores_per_cu = (nvidia_compute_capability>=30&&nvidia_compute_capability<50); // identify Kepler GPUs
+				const bool nvidia__64_cores_per_cu = (nvidia_compute_capability>=70&&nvidia_compute_capability<80)||contains_any(to_lower(name), {"p100", "a100", "a30"}); // identify Volta, Turing, P100, A100, A30
+				cores_per_cu = is_gpu ? (nvidia__32_cores_per_cu ? 32.0f : nvidia_192_cores_per_cu ? 192.0f : nvidia__64_cores_per_cu ? 64.0f : 128.0f) : 1.0f; // 32 (Fermi), 192 (Kepler), 64 (Volta, Turing, P100, A100, A30), 128 (Maxwell, Pascal, Ampere, Hopper, Ada, Blackwell) or 1 (CPUs)
+			} else if(vendor_id==0x1027F00) { // Apple iGPU
+				cores_per_cu = 128.0f; // Apple ARM GPUs usually have 128 cores/CU
+			} else if(vendor_id==0x1022||vendor_id==0x10006||vendor_id==0x6C636F70) { // x86 CPUs with PoCL runtime
+				cores_per_cu = 0.5f; // CPUs typically have 1/2 cores/CU due to SMT/hyperthreading
+			} else if(contains(to_lower(vendor), "arm")) { // ARM
+				cores_per_cu = is_gpu ? 8.0f : 1.0f; // ARM GPUs usually have 8 cores/CU, ARM CPUs have 1 core/CU
+			}
+			const uint ipc = is_gpu ? 2u : 32u; // IPC (instructions per cycle) is 2 for GPUs and 32 for most modern CPUs
+			const uint cores = to_uint((float)compute_units*cores_per_cu); // for CPUs, compute_units is the number of threads (twice the number of cores with hyperthreading)
+			const float tflops = 1E-6f*(float)cores*(float)ipc*(float)clock_frequency; // estimated device floating point performance in TeraFLOPs/s
 			if(tflops>best_value) {
 				best_value = tflops;
 				best_i = i;
@@ -305,7 +320,7 @@ int main() {
 		cl::Program::Sources cl_source;
 		cl_source.push_back({ opencl_c_code.c_str(), opencl_c_code.length() });
 		cl_program = cl::Program(cl_context, cl_source);
-		int error = cl_program.build("-cl-fast-relaxed-math -w"); // compile OpenCL C code, disable warnings
+		int error = cl_program.build({ cl_device }, "-cl-finite-math-only -cl-no-signed-zeros -cl-mad-enable -w"); // compile OpenCL C code, disable warnings
 		if(error) print_warning(cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_device)); // print build log
 		if(error) print_error("OpenCL C code compilation failed.");
 		else print_info("OpenCL C code successfully compiled.");
