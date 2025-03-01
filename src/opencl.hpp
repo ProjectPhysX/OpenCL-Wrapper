@@ -113,6 +113,7 @@ struct Device_Info {
 		name = trim(cl_device.getInfo<CL_DEVICE_NAME>()); // device name
 		vendor = trim(cl_device.getInfo<CL_DEVICE_VENDOR>()); // device vendor
 		driver_version = trim(cl_device.getInfo<CL_DRIVER_VERSION>()); // device driver version
+		opencl_c_version = cl_device.getInfo<CL_DEVICE_OPENCL_C_VERSION>().substr(9, 3);
 		memory = (uint)(cl_device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>()/1048576ull); // global memory in MB
 		global_cache = (uint)(cl_device.getInfo<CL_DEVICE_GLOBAL_MEM_CACHE_SIZE>()/1024ull); // global cache in KB
 		local_cache = (uint)(cl_device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>()/1024ull); // local cache in KB
@@ -132,12 +133,10 @@ struct Device_Info {
 		uses_ram = is_cpu||cl_device.getInfo<CL_DEVICE_HOST_UNIFIED_MEMORY>(); // CPUs or iGPUs
 		const int vendor_id = (int)cl_device.getInfo<CL_DEVICE_VENDOR_ID>(); // AMD=0x1002, Intel=0x8086, Nvidia=0x10DE, Apple=0x1027F00
 		float cores_per_cu = 1.0f;
-#if defined(__APPLE__) // macOS only supports OpenCL 1.2, OpenCL extensions are missing before OpenCL 3.0
-		opencl_c_version = cl_device.getInfo<CL_DEVICE_OPENCL_C_VERSION>().substr(9, 3);
-#else // Windows / Linux / Android
+#if !defined(__APPLE__) // macOS only supports OpenCL 1.2, OpenCL extensions are missing before OpenCL 3.0
 		uint max_opencl_c_version = 0u; // device OpenCL C version; cl_device.getInfo<CL_DEVICE_OPENCL_C_VERSION>().substr(9, 3) is unreliable as it will report 1.2 if 3.0 is available but not 2.X
 		for(auto& v : cl_device.getInfo<CL_DEVICE_OPENCL_C_ALL_VERSIONS>()) max_opencl_c_version = max(max_opencl_c_version, 10u*(uint)CL_VERSION_MAJOR(v.version)+CL_VERSION_MINOR(v.version));
-		opencl_c_version = to_string(max_opencl_c_version/10u)+"."+to_string(max_opencl_c_version%10u);
+		if(max_opencl_c_version>=10u) opencl_c_version = to_string(max_opencl_c_version/10u)+"."+to_string(max_opencl_c_version%10u);
 		const auto idpap = cl_device.getInfo<CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_4x8BIT_PACKED_KHR>();
 		const cl_bool* idpap_bits = (cl_bool*)&idpap; // on some unsupported devices, values are random, so only claim is_dp4a_capable if all bits are set correctly
 		is_dp4a_capable = (uint)(cl_device.getInfo<CL_DEVICE_INTEGER_DOT_PRODUCT_CAPABILITIES_KHR>()==3&&idpap_bits[0]==1&&idpap_bits[1]==1&&idpap_bits[2]==1&&idpap_bits[3]==1&&idpap_bits[4]==1&&idpap_bits[5]==1);
