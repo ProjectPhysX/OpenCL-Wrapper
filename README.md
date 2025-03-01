@@ -136,14 +136,25 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
      - automatically enable FP64/FP16 capabilities in OpenCL C code
      - automatically print log to console if there are compile errors
      - easy option to generate PTX assembly for Nvidia GPUs and save that in a `.ptx` file
-   - contains all device-specific workarounds/patches to make OpenCL fully cross-compatible
-     - enable basic FP16 support on Nvidia Pascal and newer GPUs with driver 520 or newer
-     - enable >4GB single buffer VRAM allocations on Intel Arc GPUs
-     - fix for wrong VRAM capacity reporting on Intel Arc GPUs
-     - fix for wrong device name reporting on AMD GPUs
-     - fix for maximum buffer allocation size limit for AMD GPUs
-     - fix for maximum buffer allocation size limit in Intel CPU Runtime for OpenCL
-     - fix for terrible `fma` performance on ARM GPUs
+   - <details><summary>contains all device-specific workarounds/patches to make OpenCL fully cross-compatible</summary>
+
+     - AMD
+       - fix for wrong device name reporting on AMD GPUs
+       - fix for maximum buffer allocation size limit for AMD GPUs
+     - Intel
+       - enable >4GB single buffer VRAM allocations on Intel Arc GPUs
+       - fix for wrong VRAM capacity reporting on Intel Arc GPUs
+       - fix for maximum buffer allocation size limit in Intel CPU Runtime for OpenCL
+       - fix for false dp4a reporting on Intel
+     - Nvidia
+       - enable basic FP16 support on Nvidia Pascal and newer GPUs with driver 520 or newer
+     - other
+       - enable FP64, FP16 and INT64 atomics support on supported devices
+       - fix for unreliable OpenCL C version reporting
+       - always compile for latest supported OpenCL C standard
+       - fix for terrible `fma` performance on ARM GPUs
+
+     </details>
 2. create a `Memory` object with 1 line
    - one object for both host and device memory
    - easy host <-> device memory transfer (also for 1D/2D/3D grid domains)
