@@ -562,7 +562,7 @@ template<typename T> inline void println(const T& x) {
 inline vector<string> split_regex(const string& s, const string& separator="\\s+") {
 	vector<string> r;
 	const std::regex rgx(separator);
-	std::sregex_token_iterator token(s.begin(), s.end()+1, rgx, -1), end;
+	std::sregex_token_iterator token(s.begin(), s.end(), rgx, -1), end;
 	while(token!=end) {
 		r.push_back(*token);
 		token++;
@@ -591,7 +591,7 @@ inline void print_message(const string& message, const string& keyword="", const
 	const uint k=length(keyword)+2u, w=CONSOLE_WIDTH-4u-k;
 	string p=colons?": ":"  ", f="";
 	for(uint j=0u; j<k; j++) f += " ";
-	vector<string> v = split_regex(message, "[\\s\\0]+");
+	vector<string> v = split_regex(message);
 	uint l = 0u; // length of current line of words
 	for(uint i=0u; i<(uint)v.size(); i++) {
 		const string word = v.at(i);
