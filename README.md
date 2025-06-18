@@ -140,6 +140,7 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
 
      - AMD
        - fix for wrong device name reporting on AMD GPUs
+       - fix for wrong reporting of dual-CU count as CU count on AMD RDNA+ GPUs
        - fix for maximum buffer allocation size limit for AMD GPUs
      - Intel
        - enable >4GB single buffer VRAM allocations on Intel Arc GPUs
