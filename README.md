@@ -149,11 +149,13 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
        - fix for false dp4a reporting on Intel
      - Nvidia
        - enable basic FP16 support on Nvidia Pascal and newer GPUs with driver 520 or newer
+     - ARM
+       - disable broken zero-copy on ARM iGPUs
+       - fix for terrible `fma` performance on ARM GPUs
      - other
        - enable FP64, FP16 and INT64 atomics support on supported devices
        - fix for unreliable OpenCL C version reporting
        - always compile for latest supported OpenCL C standard
-       - fix for terrible `fma` performance on ARM GPUs
 
      </details>
 2. create a `Memory` object with 1 line
