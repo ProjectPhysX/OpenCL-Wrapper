@@ -177,6 +177,7 @@ struct Device_Info {
 			const bool nvidia_192_cores_per_cu = (nvidia_compute_capability>=30u&&nvidia_compute_capability< 50u); // identify Kepler GPUs
 			const bool nvidia__64_cores_per_cu = (nvidia_compute_capability>=70u&&nvidia_compute_capability<=80u)||nvidia_compute_capability==60u; // identify Volta, Turing, P100, A100, A30
 			cores_per_cu = is_gpu ? (nvidia__32_cores_per_cu ? 32.0f : nvidia_192_cores_per_cu ? 192.0f : nvidia__64_cores_per_cu ? 64.0f : 128.0f) : 1.0f; // 32 (Fermi), 192 (Kepler), 64 (Volta, Turing, P100, A100, A30), 128 (Maxwell, Pascal, Ampere, Hopper, Ada, Blackwell) or 1 (CPUs)
+			if(is_gpu) uses_ram = false; // CL_MEM_USE_HOST_PTR is broken on Nvidia iGPUs like GB10, so disable zero-copy there
 			patch_nvidia_fp16 = patch_nvidia_fp16||(nvidia_compute_capability>=60&&atof(driver_version.substr(0, 6).c_str())>=520.00); // enable for all Nvidia Pascal or newer GPUs with driver>=520.00
 			if(patch_nvidia_fp16) is_fp16_capable = 2u;
 			is_dp4a_capable = (uint)(nvidia_compute_capability>=61u); // Nvidia GPUs with nvidia_compute_capability>=61 don't report dp4a support through cl_khr_integer_dot_product extension, but support it via inline PTX assembly
