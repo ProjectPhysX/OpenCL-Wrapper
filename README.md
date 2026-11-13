@@ -135,7 +135,7 @@ Use-case example: [FluidX3D](https://github.com/ProjectPhysX/FluidX3D) builds en
    - automatic OpenCL C code compilation when creating the Device object
      - automatically enable FP64/FP16 capabilities in OpenCL C code
      - automatically print log to console if there are compile errors
-     - easy option to dump Nvidia PTX / AMD ISA assembly
+     - easy option to dump assembly of compiled OpenCL kernels (AMD ISA / Nvidia PTX / Intel vISA / CPU x86)
    - <details><summary>contains all device-specific workarounds/patches to make OpenCL fully cross-compatible</summary>
 
      - AMD
